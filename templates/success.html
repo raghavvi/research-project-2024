@@ -1,0 +1,60 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+<head>
+    <style>
+
+        .float-element {
+            width: 50%;
+            float: left;
+            display: block;
+        }
+
+        .thermometer-container {
+            height: 485px;
+            background-color: white;
+        }
+
+       .map-container {
+            height: 485px;
+            background-color: aqua;
+        }
+
+       #map {
+            position: relative;
+            height: calc(90% - 20px);
+            width: 85%
+            margin-bottom: 20px;
+            z-index: 5;
+        }
+
+    </style>
+</head>
+
+<div class="float-element">
+    <div class="thermometer-container">Thermometer Component</div>
+</div>
+
+<div class="float-element">
+    <div class="map-container">Map Component</div>
+</div>
+
+<script>
+
+    function myMap() {
+        var mapProp= {
+          center:new google.maps.LatLng(39.134556,-84.515413),
+          zoom:17,
+        };
+
+        var map = new google.maps.Map(document.getElementById("map"),mapProp);
+    }
+
+</script>
+
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{key}}&callback=myMap"></script>
+
+{% endblock %}
+
