@@ -246,18 +246,39 @@ def filter_dataset(interval,data):
                         'AGGRAVATED ROBBERY', 'RAPE', 'ROBBERY', 'MURDER']
     offense_result = [result for result in point_results if result.get('OFFENSE') in heavy_crime_list]
     filtered_results = filter_time_interval(interval, offense_result)
+
     return filtered_results
 
-def get_crimecounts_forlocation(safecordinates,data):
+def return_data_duplicates(FilteredModel):
+    print("get data duplicates")
+    distinct_values = FilteredModel.objects.distinct('INCIDENT_NO')
+    distinct_values_set = set(distinct_values)
+    for s in distinct_values_set:
+        incidentmatch = FilteredModel.objects(INCIDENT_NO=s)
+        #store a list of matches belonging to incident no
+        matches = [m.INCIDENT_NO for m in incidentmatch]
+        count = len(matches)
+        if count > 1:
+            print("case true")
+            for x in range(1, len(matches)):
+                FilteredModel.objects(INCIDENT_NO=x).delete()
+                #remove element from list
+                count -= 1
+                print("count",count)
+        else:
+            print("case false")
+            print("matches",matches)
+    return FilteredModel
+    #store matches to array result
+
+
+
+def get_crimecounts_forlocation(coordinates,data,distance):
     Model.create_index([("point", "2dsphere")])
 
-    center_point = {"type": "Point", "coordinates": safecordinates}
-    sample_point = [-84.517881, 39.174204]
+    longitude = coordinates[0]
+    latitude = coordinates[1]
 
-    radius = 500000
-    earth_radius = 6378.1
-
-    print("center_point",center_point)
     #Extract points from filtered dataset
     #save filtered dataset to model
     model = [FilteredModel(INCIDENT_NO=item['INCIDENT_NO'], point=item['point'],
@@ -265,25 +286,70 @@ def get_crimecounts_forlocation(safecordinates,data):
 
     FilteredModel.objects.insert(model)
 
+    # model = return_data_duplicates(FilteredModel)
+    # print("newmodelobjects",model.objects.all())
+
     newmodelobjects = FilteredModel.objects.all()
+    print("newmodelobjects",newmodelobjects)
 
-    #original filtered data
-    # for d in data:
-    #     print(d['ADDRESS_X'], d['point'])
+    incidentnorecordset = set(record.INCIDENT_NO for record in newmodelobjects)
 
-    print("filtered data")
-    for m in newmodelobjects:
-        print(f"ADDRESS_X: {m.ADDRESS_X}",f"point: {m.point}")
-        geoquery = FilteredModel.objects(point=m.point,point__geo_within_sphere=[center_point, radius/earth_radius])
 
-        print("geoquery",geoquery)
+    for r in incidentnorecordset:
+        #get the first record that matches with the incident no. Avoids duplicate records
+        firstdocumentmatch = FilteredModel.objects(INCIDENT_NO=r).first()
+        print("firstDocumentMatch",firstdocumentmatch['ADDRESS_X'], firstdocumentmatch['point'])
+        # pointsfoundwithinradius = FilteredModel.objects(point=firstdocumentmatch['point'],
+        #                                                 point__geo_within_sphere=[(longitude, latitude), 0.001])
+        #vr
+        # available_results = [[result.point,result.ADDRESS_X]for result in pointsfoundwithinradius]
+        #
+        # print("pointsfoundwithinradius",available_results[0],available_results[1])
+        pointsfoundwithinradius = FilteredModel.objects(INCIDENT_NO=r,
+                                                        point__geo_within_sphere=[(longitude, latitude),
+                                                                                  distance])
+        available_points = pointsfoundwithinradius.first()
 
-    # pointswithinsearch = FilteredModel.objects(point__geo_within_sphere=[center_point, radius/earth_radius])
-    #
-    # if pointswithinsearch:
-    #     print("Point or points are found within radius of center point")
-    # else:
-    #     print("No points found")
+        if pointsfoundwithinradius:
+            print("point found within radius")
+            print("pointsfoundwithinradius", available_points['ADDRESS_X'], available_points['point'])
+        else:
+            print("point not found within radius")
+
+
+        # {point: {$geoWithin: { $centerSphere: [ [ -84.517881, 39.174204 ],0.001]}}}
+       # {point: {$geoWithin: { $centerSphere: [ [ -84.68332126736641, 39.102932826045645 ], 0.0001642719286375257 ]}}}
+
+
+    # filteredrecordset = set(record for record in newmodelobjects)
+    # print("get all reccords")
+    # results = []
+    # for m in newmodelobjects:
+    #     print(f"ADDRESS_X: {m.ADDRESS_X}",f"point: {m.point}")
+    #     pointsfoundwithinradius = FilteredModel.objects(point=m.point,point__geo_within_sphere=[center_point, radius/earth_radius])
+    #     if pointsfoundwithinradius:
+    #         results.append(pointsfoundwithinradius)
+    #     else:
+    #         print("No points found")
+
+def get_radius(radius, unit):
+
+    radius = float(radius)
+    try:
+        if unit == "meters":
+            earthradius = 6378.1
+            #convert meters to kilometers
+            radius = radius / 1000
+        elif unit == "miles":
+            earthradius = 3963.2
+        else:
+            earthradius = 6378.1
+    except Exception as e:
+        print("Error: ", e)
+    finally:
+        radians = radius/earthradius
+
+    return radians
 
 
 
@@ -311,7 +377,11 @@ def success(safe, work, current, interval, radius, unit):
     data = filter_dataset(user.interval, aggregate_data)
     filtered_data_list = [doc for doc in data]
 
-    get_crimecounts_forlocation(user.safecoordinates,filtered_data_list)
+    radians = get_radius(user.radius, user.units)
+    print("radians",radians)
+    get_crimecounts_forlocation(user.safecoordinates,filtered_data_list, radians)
+    get_crimecounts_forlocation(user.workcoordinates,filtered_data_list, radians)
+    get_crimecounts_forlocation(user.currentcoordinates,filtered_data_list, radians)
 
     return render_template('success.html', key=key)
 
