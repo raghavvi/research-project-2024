@@ -1,3 +1,8 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import shapely
+import geopandas as gpd
 from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_mongoengine import MongoEngine
 from geopy import distance, Location
@@ -249,27 +254,59 @@ def filter_dataset(interval,data):
 
     return filtered_results
 
-def return_data_duplicates(FilteredModel):
-    print("get data duplicates")
-    distinct_values = FilteredModel.objects.distinct('INCIDENT_NO')
-    distinct_values_set = set(distinct_values)
-    for s in distinct_values_set:
-        incidentmatch = FilteredModel.objects(INCIDENT_NO=s)
-        #store a list of matches belonging to incident no
-        matches = [m.INCIDENT_NO for m in incidentmatch]
-        count = len(matches)
-        if count > 1:
-            print("case true")
-            for x in range(1, len(matches)):
-                FilteredModel.objects(INCIDENT_NO=x).delete()
-                #remove element from list
-                count -= 1
-                print("count",count)
-        else:
-            print("case false")
-            print("matches",matches)
-    return FilteredModel
-    #store matches to array result
+def coord_lister(geom):
+    coords = list(geom.exterior.coords)
+    return (coords)
+
+def compute_grid(radians):
+    #get the min and max latitude, longitude of the datapoints
+    bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
+
+    x = bbox[1]
+    xf = bbox[3]
+    y = bbox[0]
+    yf = bbox[2]
+
+    x0,y0 = (x,y)
+
+    grid_cells = []
+    while y0 <= yf:
+        while x0 <= xf:
+            grid_cells.append(shapely.geometry.box(x0, y0, x0 + radians, y0 + radians))
+            x0 = x0 + radians
+        x0 = x
+        y0 = y0 + radians
+
+    print("grid_cells", grid_cells[0])
+    print("radians",radians)
+
+
+
+    id = [i for i in range(len(grid_cells))]
+    gridDf = gpd.GeoDataFrame({"id":id,"geometry":grid_cells})
+
+    # gridDf.crs = 'esri:54034'
+    # target_crs = 'epsg:3857'
+
+    # gridDf.crs = 'esri:3857'
+
+    # gridDf_projected = gridDf.to_crs(target_crs)
+
+    geometry = gridDf["geometry"]
+
+    polygon = geometry.apply(coord_lister)
+
+    coordinates = [[list(y) for y in x] for x in polygon]
+
+    print("coordinates0",coordinates[0])
+
+    data = {
+        'coordinates': coordinates
+    }
+
+    return data
+
+
 
 
 
@@ -294,7 +331,7 @@ def get_crimecounts_forlocation(coordinates,data,distance):
 
     incidentnorecordset = set(record.INCIDENT_NO for record in newmodelobjects)
 
-
+    count = 0
     for r in incidentnorecordset:
         #get the first record that matches with the incident no. Avoids duplicate records
         firstdocumentmatch = FilteredModel.objects(INCIDENT_NO=r).first()
@@ -313,13 +350,9 @@ def get_crimecounts_forlocation(coordinates,data,distance):
         if pointsfoundwithinradius:
             print("point found within radius")
             print("pointsfoundwithinradius", available_points['ADDRESS_X'], available_points['point'])
+            count += 1
         else:
             print("point not found within radius")
-
-
-        # {point: {$geoWithin: { $centerSphere: [ [ -84.517881, 39.174204 ],0.001]}}}
-       # {point: {$geoWithin: { $centerSphere: [ [ -84.68332126736641, 39.102932826045645 ], 0.0001642719286375257 ]}}}
-
 
     # filteredrecordset = set(record for record in newmodelobjects)
     # print("get all reccords")
@@ -331,6 +364,7 @@ def get_crimecounts_forlocation(coordinates,data,distance):
     #         results.append(pointsfoundwithinradius)
     #     else:
     #         print("No points found")
+    return count
 
 def get_radius(radius, unit):
 
@@ -379,11 +413,16 @@ def success(safe, work, current, interval, radius, unit):
 
     radians = get_radius(user.radius, user.units)
     print("radians",radians)
-    get_crimecounts_forlocation(user.safecoordinates,filtered_data_list, radians)
-    get_crimecounts_forlocation(user.workcoordinates,filtered_data_list, radians)
-    get_crimecounts_forlocation(user.currentcoordinates,filtered_data_list, radians)
+    countsafe = get_crimecounts_forlocation(user.safecoordinates,filtered_data_list, radians)
+    countwork = get_crimecounts_forlocation(user.workcoordinates,filtered_data_list, radians)
+    countcurrent = get_crimecounts_forlocation(user.currentcoordinates,filtered_data_list, radians)
 
-    return render_template('success.html', key=key)
+    print("countsafe",countsafe,"countwork",countwork,"countcurrent",countcurrent)
+
+    griddata = compute_grid(radians)
+
+
+    return render_template('success.html', key=key,griddata=griddata)
 
 
 @app.route("/", methods=["GET", "POST"])
