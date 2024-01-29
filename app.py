@@ -1,20 +1,21 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
+import geojson
 import shapely
 import geopandas as gpd
-from flask import Flask, jsonify, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_mongoengine import MongoEngine
 from geopy import distance, Location
+from geopy.exc import GeocoderTimedOut
+from shapely.geometry import box
+import json
 from key import key
 from geopy.geocoders import Nominatim
 from dotenv import load_dotenv
 import os
+from pyproj import Proj, transform, Transformer
 
 load_dotenv()
 
 app = Flask(__name__)
-
 
 app.config['MONGODB_SETTINGS'] = {
     'db': 'sample_geospatial',
@@ -122,6 +123,7 @@ class Model(db.Document):
             "hour": self.hour
         }
 
+
 class FilteredModel(db.Document):
     id = db.ObjectIdField()
     INCIDENT_NO = db.IntField()
@@ -192,6 +194,7 @@ class FilteredModel(db.Document):
             "hour": self.hour
         }
 
+
 def load_dataset():
     pipeline = [
         {
@@ -221,6 +224,7 @@ def load_dataset():
 
     return hour_result_list
 
+
 def filter_time_interval(interval, data):
     if interval == "12AM-3AM":
         newlist = [result for result in data if result.get('hour') == '00' or result.get('hour') == '01'
@@ -243,7 +247,7 @@ def filter_time_interval(interval, data):
     return newlist
 
 
-def filter_dataset(interval,data):
+def filter_dataset(interval, data):
     # #Filter out crime incidents that do not have a location
     point_results = [result for result in data if result.get('point') != [0, 0]]
 
@@ -254,12 +258,92 @@ def filter_dataset(interval,data):
 
     return filtered_results
 
+
+def reverse_coordinates(geojson):
+    polygon_dict = {}
+    reversed_list = []
+    print("geojson", type(geojson))
+    feature = geojson['features']
+    geometry = feature[0]['geometry']
+    coordinates = geometry['coordinates']
+    print("geojson", coordinates)
+    for inner_list in coordinates:
+        for item in inner_list:
+            print("item", item[::-1])
+            reversed_list.append(item[::-1])
+    polygon_dict["1"] = reversed_list
+
+    print("polygon_dict", polygon_dict)
+    return polygon_dict
+
+def get_count_of_grid(polygon):
+    count = 0
+    polygon = {
+        "type": "Polygon",
+        "coordinates": [polygon.get("1")]
+    }
+
+    print("polygon",polygon)
+
+    pointsfoundwithinpolygon = FilteredModel.objects(point__geo_within=polygon)
+    print("pointsfoundwithinpolygon",pointsfoundwithinpolygon)
+
+    if pointsfoundwithinpolygon:
+        print("point found within polygon")
+        count += 1
+    else:
+        print("point not found within polygon")
+
 def coord_lister(geom):
     coords = list(geom.exterior.coords)
     return (coords)
 
-def compute_grid(radians):
-    #get the min and max latitude, longitude of the datapoints
+
+def create_grid():
+    cell_size_meters = 2500
+    bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
+
+    minx = bbox[1]
+    maxx = bbox[3]
+    miny = bbox[0]
+    maxy = bbox[2]
+
+    transformer_4326_to_3857 = Transformer.from_crs("epsg:4326", "epsg:3857", always_xy=True)
+    transformer_3857_to_4326 = Transformer.from_crs("epsg:3857", "epsg:4326", always_xy=True)
+
+    # Convert the bounding box to Web Mercator (EPSG:3857) to get a more accurate estimate of meters per degree
+    minx, miny = transformer_4326_to_3857.transform(minx, miny)
+    maxx, maxy = transformer_4326_to_3857.transform(maxx, maxy)
+
+    # Calculate the number of cells in each dimension
+    num_cells_x = int((maxx - minx) / cell_size_meters)
+    num_cells_y = int((maxy - miny) / cell_size_meters)
+
+    # Create a grid of rectangular cells
+    grid_cells = []
+    for i in range(num_cells_x):
+        for j in range(num_cells_y):
+            cell_minx = minx + i * cell_size_meters
+            cell_miny = miny + j * cell_size_meters
+            cell_maxx = minx + (i + 1) * cell_size_meters
+            cell_maxy = miny + (j + 1) * cell_size_meters
+
+            # Convert the cell bounding box back to WGS 84
+            cell_minx, cell_miny = transformer_3857_to_4326.transform(cell_minx, cell_miny)
+            cell_maxx, cell_maxy = transformer_3857_to_4326.transform(cell_maxx, cell_maxy)
+
+            grid_cells.append(box(cell_minx, cell_miny, cell_maxx, cell_maxy))
+
+    print("new grid_cells", grid_cells[0])
+
+    # Create a GeoDataFrame from the grid cells
+    grid_gdf = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:4326")
+
+    return grid_gdf
+
+
+def compute_grid(mdistance):
+    # get the min and max latitude, longitude of the datapoints
     bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
 
     x = bbox[1]
@@ -267,30 +351,22 @@ def compute_grid(radians):
     y = bbox[0]
     yf = bbox[2]
 
-    x0,y0 = (x,y)
+    x0, y0 = (x, y)
 
     grid_cells = []
     while y0 <= yf:
         while x0 <= xf:
-            grid_cells.append(shapely.geometry.box(x0, y0, x0 + radians, y0 + radians))
-            x0 = x0 + radians
+            grid_cells.append(shapely.geometry.box(x0, y0, x0 + mdistance, y0 + mdistance))
+            x0 = x0 + mdistance
         x0 = x
-        y0 = y0 + radians
+        y0 = y0 + mdistance
 
     print("grid_cells", grid_cells[0])
-    print("radians",radians)
-
-
+    print("radians", mdistance)
 
     id = [i for i in range(len(grid_cells))]
-    gridDf = gpd.GeoDataFrame({"id":id,"geometry":grid_cells})
-
-    # gridDf.crs = 'esri:54034'
-    # target_crs = 'epsg:3857'
-
-    # gridDf.crs = 'esri:3857'
-
-    # gridDf_projected = gridDf.to_crs(target_crs)
+    gridDf = gpd.GeoDataFrame({"id": id, "geometry": grid_cells})
+    gridDf.crs = "EPSG:4326"
 
     geometry = gridDf["geometry"]
 
@@ -298,7 +374,7 @@ def compute_grid(radians):
 
     coordinates = [[list(y) for y in x] for x in polygon]
 
-    print("coordinates0",coordinates[0])
+    print("coordinates0", coordinates[0])
 
     data = {
         'coordinates': coordinates
@@ -307,19 +383,16 @@ def compute_grid(radians):
     return data
 
 
-
-
-
-def get_crimecounts_forlocation(coordinates,data,distance):
+def get_crimecounts_forlocation(coordinates, data, distance):
     Model.create_index([("point", "2dsphere")])
 
     longitude = coordinates[0]
     latitude = coordinates[1]
 
-    #Extract points from filtered dataset
-    #save filtered dataset to model
+    # Extract points from filtered dataset
+    # save filtered dataset to model
     model = [FilteredModel(INCIDENT_NO=item['INCIDENT_NO'], point=item['point'],
-                            ADDRESS_X=item['ADDRESS_X'], OFFENSE=item['OFFENSE']) for item in data]
+                           ADDRESS_X=item['ADDRESS_X'], OFFENSE=item['OFFENSE']) for item in data]
 
     FilteredModel.objects.insert(model)
 
@@ -327,18 +400,18 @@ def get_crimecounts_forlocation(coordinates,data,distance):
     # print("newmodelobjects",model.objects.all())
 
     newmodelobjects = FilteredModel.objects.all()
-    print("newmodelobjects",newmodelobjects)
+    # print("newmodelobjects", newmodelobjects)
 
     incidentnorecordset = set(record.INCIDENT_NO for record in newmodelobjects)
 
     count = 0
     for r in incidentnorecordset:
-        #get the first record that matches with the incident no. Avoids duplicate records
+        # get the first record that matches with the incident no. Avoids duplicate records
         firstdocumentmatch = FilteredModel.objects(INCIDENT_NO=r).first()
-        print("firstDocumentMatch",firstdocumentmatch['ADDRESS_X'], firstdocumentmatch['point'])
+        print("firstDocumentMatch", firstdocumentmatch['ADDRESS_X'], firstdocumentmatch['point'])
         # pointsfoundwithinradius = FilteredModel.objects(point=firstdocumentmatch['point'],
         #                                                 point__geo_within_sphere=[(longitude, latitude), 0.001])
-        #vr
+        # vr
         # available_results = [[result.point,result.ADDRESS_X]for result in pointsfoundwithinradius]
         #
         # print("pointsfoundwithinradius",available_results[0],available_results[1])
@@ -366,13 +439,13 @@ def get_crimecounts_forlocation(coordinates,data,distance):
     #         print("No points found")
     return count
 
-def get_radius(radius, unit):
 
+def get_radius(radius, unit):
     radius = float(radius)
     try:
         if unit == "meters":
             earthradius = 6378.1
-            #convert meters to kilometers
+            # convert meters to kilometers
             radius = radius / 1000
         elif unit == "miles":
             earthradius = 3963.2
@@ -381,48 +454,57 @@ def get_radius(radius, unit):
     except Exception as e:
         print("Error: ", e)
     finally:
-        radians = radius/earthradius
+        radians = radius / earthradius
 
     return radians
-
 
 
 @app.route('/success/<safe>/<work>/<current>/<interval>/<radius>/<unit>')
 def success(safe, work, current, interval, radius, unit):
     geolocator = Nominatim(user_agent="project-flask")
-    safelocation = geolocator.geocode(safe)
-    worklocation = geolocator.geocode(work)
-    currentlocation = geolocator.geocode(current)
-    user = UserData()
-    user.add_safe_coordinates(safelocation.latitude, safelocation.longitude)
-    print(user.safecoordinates)
 
-    user.add_work_coordinates(worklocation.latitude, worklocation.longitude)
-    print(user.workcoordinates)
+    try:
+        safelocation = geolocator.geocode(safe)
+        worklocation = geolocator.geocode(work)
+        currentlocation = geolocator.geocode(current)
+        user = UserData()
+        user.add_safe_coordinates(safelocation.latitude, safelocation.longitude)
+        print(user.safecoordinates)
 
-    user.add_current_coordinates(currentlocation.latitude, currentlocation.longitude)
-    print(user.currentcoordinates)
+        user.add_work_coordinates(worklocation.latitude, worklocation.longitude)
+        print(user.workcoordinates)
 
-    user.interval = interval
-    user.radius = radius
-    user.units = unit
+        user.add_current_coordinates(currentlocation.latitude, currentlocation.longitude)
+        print(user.currentcoordinates)
 
-    aggregate_data = load_dataset()
-    data = filter_dataset(user.interval, aggregate_data)
-    filtered_data_list = [doc for doc in data]
+        user.interval = interval
+        user.radius = radius
+        user.units = unit
 
-    radians = get_radius(user.radius, user.units)
-    print("radians",radians)
-    countsafe = get_crimecounts_forlocation(user.safecoordinates,filtered_data_list, radians)
-    countwork = get_crimecounts_forlocation(user.workcoordinates,filtered_data_list, radians)
-    countcurrent = get_crimecounts_forlocation(user.currentcoordinates,filtered_data_list, radians)
+        aggregate_data = load_dataset()
+        data = filter_dataset(user.interval, aggregate_data)
+        filtered_data_list = [doc for doc in data]
 
-    print("countsafe",countsafe,"countwork",countwork,"countcurrent",countcurrent)
+        radians = get_radius(user.radius, user.units)
+        print("radians", radians)
+        countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, radians)
+        countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, radians)
+        countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, radians)
 
-    griddata = compute_grid(radians)
+        print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent)
 
+        grid_gdf = create_grid()
+        grid_geojson = grid_gdf.to_json()
 
-    return render_template('success.html', key=key,griddata=griddata)
+        grid_geojson_parsed = json.loads(grid_geojson)
+
+        polygon = reverse_coordinates(grid_geojson_parsed)
+
+        get_count_of_grid(polygon)
+
+        return render_template('success.html', key=key, griddata=json.dumps(grid_geojson_parsed))
+    except GeocoderTimedOut as e:
+        return render_template('404.html'), 404
 
 
 @app.route("/", methods=["GET", "POST"])

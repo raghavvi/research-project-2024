@@ -64,48 +64,52 @@
 
         var map = new google.maps.Map(document.getElementById("map"),mapProp);
 
-        var gridData = JSON.parse('{{griddata | tojson | safe}}');
-        var objectList = [];
+        document.addEventListener('DOMContentLoaded', function () {
+            var gridGeoJSON = {{ griddata | safe }};
 
-        var gridData = gridData.coordinates;
-        gridData.forEach(function (grid) {
+            // Use gridGeoJSON in your JavaScript code to add it to the map
+            console.log('Grid GeoJSON:', gridGeoJSON);
 
-            grid.forEach(function (g) {
-                let latitude = g[0];
-                let longitude = g[1];
+            var googleMapsPolygons = turfCoordToGoogleMapsPolygons(gridGeoJSON);
+            console.log("googleMapsPolygons",googleMapsPolygons);
 
-                console.log("latitude",latitude,"longitude",longitude);
+            for (var i = 0; i < googleMapsPolygons.length; i++) {
+                new google.maps.Polygon({
+                    paths: googleMapsPolygons[i],
+                    map: map,
+                    strokeColor: '#000000',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 1,
+                    fillColor: '#0000FF',
+                    fillOpacity: 0.35
+                    });
+            }
 
-                 var obj = {
-                  lat: latitude,
-                  lng: longitude,
-                };
 
-                console.log("obj",obj);
-                objectList.push(obj);
-
-            });
         });
 
-        console.log("object list",objectList);
+        // Function to convert Turf.js coordinates to Google Maps API polygons
 
-          // Create a Polyline and set its path
-          var line = new google.maps.Polyline({
-            path: objectList,
-            geodesic: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-          });
+        function turfCoordToGoogleMapsPolygons(geojson) {
+           var polygons = [];
 
-          // Set the Polyline on the map
-          line.setMap(map);
+           geojson.features.forEach(function (feature) {
+               var coords = feature.geometry.coordinates[0];
+               var googleMapsCoords = coords.map(function (coord) {
+                   return { lat: coord[0], lng: coord[1] };
+               });
+               polygons.push(googleMapsCoords);
+           });
+           return polygons;
+        }
+
 
     }
 
 </script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key={{key}}&callback=myMap"></script>
+<script src="https://unpkg.com/@turf/turf"></script>
 
 {% endblock %}
 
