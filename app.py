@@ -260,39 +260,45 @@ def filter_dataset(interval, data):
 
 
 def reverse_coordinates(geojson):
-    polygon_dict = {}
     reversed_list = []
+    listcount = 0
     print("geojson", type(geojson))
     feature = geojson['features']
-    geometry = feature[0]['geometry']
-    coordinates = geometry['coordinates']
-    print("geojson", coordinates)
-    for inner_list in coordinates:
-        for item in inner_list:
-            print("item", item[::-1])
-            reversed_list.append(item[::-1])
-    polygon_dict["1"] = reversed_list
 
-    print("polygon_dict", polygon_dict)
-    return polygon_dict
+    for f in feature:
+        geometry = f['geometry']
+        coordinates = geometry['coordinates']
+        for inner_list in coordinates:
+            for item in inner_list:
+                reversed_list.append(item[::-1])
+                listcount += 1
+        [reversed_list[listcount: (1 + listcount) * 5]]
+    print("reversed_list0", reversed_list[0:5])
+    print("reversed_list1", reversed_list[6:11])
 
-def get_count_of_grid(polygon):
+    return reversed_list
+
+def get_count_of_grid(polygon_dict):
     count = 0
-    polygon = {
-        "type": "Polygon",
-        "coordinates": [polygon.get("1")]
-    }
+    gridcount = []
+    print("polygon_list", polygon_dict[0:5])
 
-    print("polygon",polygon)
+    sublists = [polygon_dict[i:i+5] for i in range(0, len(polygon_dict), 5)]
+    for sublist in sublists:
+        polygon = {
+            "type": "Polygon",
+            "coordinates": [sublist]
+        }
+        pointsfoundwithinpolygon = FilteredModel.objects(point__geo_within=polygon)
+        #print("pointsfoundwithinpolygon",pointsfoundwithinpolygon)
 
-    pointsfoundwithinpolygon = FilteredModel.objects(point__geo_within=polygon)
-    print("pointsfoundwithinpolygon",pointsfoundwithinpolygon)
+        if pointsfoundwithinpolygon:
+            print("point found within polygon")
+            count += 1
+            gridcount.append(count)
+    #
+    # print("gridcount",gridcount)
 
-    if pointsfoundwithinpolygon:
-        print("point found within polygon")
-        count += 1
-    else:
-        print("point not found within polygon")
 
 def coord_lister(geom):
     coords = list(geom.exterior.coords)
@@ -462,7 +468,6 @@ def get_radius(radius, unit):
 @app.route('/success/<safe>/<work>/<current>/<interval>/<radius>/<unit>')
 def success(safe, work, current, interval, radius, unit):
     geolocator = Nominatim(user_agent="project-flask")
-
     try:
         safelocation = geolocator.geocode(safe)
         worklocation = geolocator.geocode(work)
@@ -486,21 +491,17 @@ def success(safe, work, current, interval, radius, unit):
         filtered_data_list = [doc for doc in data]
 
         radians = get_radius(user.radius, user.units)
-        print("radians", radians)
         countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, radians)
         countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, radians)
         countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, radians)
-
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent)
 
         grid_gdf = create_grid()
         grid_geojson = grid_gdf.to_json()
-
         grid_geojson_parsed = json.loads(grid_geojson)
 
         polygon = reverse_coordinates(grid_geojson_parsed)
-
-        get_count_of_grid(polygon)
+        #get_count_of_grid(polygon)
 
         return render_template('success.html', key=key, griddata=json.dumps(grid_geojson_parsed))
     except GeocoderTimedOut as e:
