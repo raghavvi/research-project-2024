@@ -1,17 +1,19 @@
-import geojson
-import shapely
-import geopandas as gpd
 from flask import Flask, request, render_template, redirect, url_for, jsonify
-from flask_mongoengine import MongoEngine
-from geopy import distance, Location
-from geopy.exc import GeocoderTimedOut
+import time
 from shapely.geometry import box
+from pyproj import Transformer
+from geopy.exc import GeocoderTimedOut
+import geopandas as gpd
 import json
 from key import key
 from geopy.geocoders import Nominatim
 from dotenv import load_dotenv
 import os
-from pyproj import Proj, transform, Transformer
+from models import db
+from models import Model
+from griddata import gridcounts
+
+#TO-DO Need to add a seperate endpoint that computes the grid for different sizes
 
 load_dotenv()
 
@@ -21,8 +23,7 @@ app.config['MONGODB_SETTINGS'] = {
     'db': 'sample_geospatial',
     'host': os.getenv('MONGODB_URI'),
 }
-db = MongoEngine(app)
-
+db.init_app(app)
 
 class UserData:
     latitude = None
@@ -52,150 +53,9 @@ class UserData:
         self.currentcoordinates.append(latitude)
 
 
-class Model(db.Document):
-    id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
-    CLSD = db.StringField()
-    UCR = db.IntField()
-    DST = db.IntField()
-    BEAT = db.IntField()
-    OFFENSE = db.StringField()
-    LOCATION = db.StringField()
-    THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
-    DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
-    CPD_NEIGHBORHOOD = db.StringField()
-    WEAPONS = db.StringField()
-    DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
-    ADDRESS_X = db.StringField()
-    LONGITUDE_X = db.FloatField()
-    LATITUDE_X = db.FloatField()
-    point = db.PointField()
-    year = db.StringField()
-    day = db.StringField()
-    month = db.StringField()
-    time = db.StringField()
-    hour = db.StringField()
-    meta = {'collection': 'police_cinci_data',
-            'strict': False}
-
-    def to_json(self):
-        return {
-            "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
-            "OFFENSE": self.OFFENSE,
-            "LOCATION": self.LOCATION,
-            "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
-            "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
-            "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
-            "WEAPONS": self.WEAPONS,
-            "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
-            "ADDRESS_X": self.ADDRESS_X,
-            "LONGITUDE_X": self.LONGITUDE_X,
-            "LATITUDE_X": self.LATITUDE_X,
-            "point": self.point,
-            "year": self.year,
-            "day": self.day,
-            "month": self.month,
-            "time": self.time,
-            "hour": self.hour
-        }
-
-
-class FilteredModel(db.Document):
-    id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
-    CLSD = db.StringField()
-    UCR = db.IntField()
-    DST = db.IntField()
-    BEAT = db.IntField()
-    OFFENSE = db.StringField()
-    LOCATION = db.StringField()
-    THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
-    DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
-    CPD_NEIGHBORHOOD = db.StringField()
-    WEAPONS = db.StringField()
-    DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
-    ADDRESS_X = db.StringField()
-    LONGITUDE_X = db.FloatField()
-    LATITUDE_X = db.FloatField()
-    point = db.PointField()
-    year = db.StringField()
-    day = db.StringField()
-    month = db.StringField()
-    time = db.StringField()
-    hour = db.StringField()
-    meta = {'strict': False}
-
-    def to_json(self):
-        return {
-            "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
-            "OFFENSE": self.OFFENSE,
-            "LOCATION": self.LOCATION,
-            "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
-            "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
-            "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
-            "WEAPONS": self.WEAPONS,
-            "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
-            "ADDRESS_X": self.ADDRESS_X,
-            "LONGITUDE_X": self.LONGITUDE_X,
-            "LATITUDE_X": self.LATITUDE_X,
-            "point": self.point,
-            "year": self.year,
-            "day": self.day,
-            "month": self.month,
-            "time": self.time,
-            "hour": self.hour
-        }
-
-
 def load_dataset():
+    #remove_duplicates()
+
     pipeline = [
         {
             '$addFields': {
@@ -223,6 +83,7 @@ def load_dataset():
     hour_result_list = [doc for doc in hour_result]
 
     return hour_result_list
+
 
 
 def filter_time_interval(interval, data):
@@ -258,11 +119,129 @@ def filter_dataset(interval, data):
 
     return filtered_results
 
+def compute_zscore():
+    print("Starting function")
+
+def coord_lister(geom):
+    coords = list(geom.exterior.coords)
+    return (coords)
+
+
+def get_radius(radius, unit):
+    radius = float(radius)
+    try:
+        if unit == "meters":
+            earthradius = 6378.1
+            # convert meters to kilometers
+            radius = radius / 1000
+        elif unit == "miles":
+            earthradius = 3963.2
+        else:
+            earthradius = 6378.1
+    except Exception as e:
+        print("Error: ", e)
+    finally:
+        radians = radius / earthradius
+        print("radians: ", radians)
+    return radians
+
+def get_meters(radius, unit):
+    radius = int(radius)
+    if unit == "meters":
+        return radius
+    elif unit == "miles":
+        return radius * 1609.34
+    else:
+        return radius * 1000
+
+def get_crimecounts_forlocation(coordinates, data, distance):
+    Model.create_index([("point", "2dsphere")])
+
+    #Return counts of documents
+    count = Model.objects.all().count()
+    print("count",count)
+
+    longitude = coordinates[0]
+    latitude = coordinates[1]
+
+    pipeline = [
+        {
+            "$geoNear": {
+                "near": {
+                    "type": "Point",
+                    "coordinates": [longitude, latitude]
+                },
+                "distanceField": "point",
+                "maxDistance": distance,
+                "spherical": True
+            }
+        }
+    ]
+
+    result = Model.objects().aggregate(*pipeline)
+    distance_near_list = [doc['INCIDENT_NO'] for doc in result]
+
+    if len(distance_near_list) != 0:
+        #print("distance_near_list", len(distance_near_list))
+        print("distance_near_list", distance_near_list)
+    else:
+        print("query does not return a result", distance_near_list)
+    return len(distance_near_list)
+
+
+GRID_DISTANCES_LIST = [
+    (500, "meters"),
+    (1, "miles"),
+    (2, "miles"),
+    (5, "miles")
+]
+
+
+def get_count_of_grid_new(polygon_dict):
+    start_time = time.time()
+    sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
+    count_list = [search_within_polygon(sublist) for sublist in sublists]
+    #print("count_list", count_list)
+    print("--- %s secconds ---" % (time.time() - start_time))
+    return count_list
+
+
+def search_within_polygon(sublistelement):
+
+    # print("polygon1 type", type(polygon1))
+    # print("sublistelement type", type(sublistelement))
+    # print("sublistelement", sublistelement)
+
+    # start_time = time.time()
+    polygon_pipeline = [
+        {
+            "$match": {
+                "point": {
+                    "$geoWithin": {
+                        "$geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                sublistelement
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+    result = Model.objects().aggregate(*polygon_pipeline)
+    polygon_result_list = [doc for doc in result]
+    if len(polygon_result_list) != 0:
+        print("polygon_result_list", len(polygon_result_list))
+    # else:
+    #     print("query does not return a result", polygon_result_list)
+    # print("--- %s secconds ---" % (time.time() - start_time))
+    return len(polygon_result_list)
+
 
 def reverse_coordinates(geojson):
     reversed_list = []
     listcount = 0
-    print("geojson", type(geojson))
     feature = geojson['features']
 
     for f in feature:
@@ -273,40 +252,11 @@ def reverse_coordinates(geojson):
                 reversed_list.append(item[::-1])
                 listcount += 1
         [reversed_list[listcount: (1 + listcount) * 5]]
-    print("reversed_list0", reversed_list[0:5])
-    print("reversed_list1", reversed_list[6:11])
 
     return reversed_list
 
-def get_count_of_grid(polygon_dict):
-    count = 0
-    gridcount = []
-    print("polygon_list", polygon_dict[0:5])
 
-    sublists = [polygon_dict[i:i+5] for i in range(0, len(polygon_dict), 5)]
-    for sublist in sublists:
-        polygon = {
-            "type": "Polygon",
-            "coordinates": [sublist]
-        }
-        pointsfoundwithinpolygon = FilteredModel.objects(point__geo_within=polygon)
-        #print("pointsfoundwithinpolygon",pointsfoundwithinpolygon)
-
-        if pointsfoundwithinpolygon:
-            print("point found within polygon")
-            count += 1
-            gridcount.append(count)
-    #
-    # print("gridcount",gridcount)
-
-
-def coord_lister(geom):
-    coords = list(geom.exterior.coords)
-    return (coords)
-
-
-def create_grid():
-    cell_size_meters = 2500
+def create_grid(cell_size_meters):
     bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
 
     minx = bbox[1]
@@ -348,121 +298,26 @@ def create_grid():
     return grid_gdf
 
 
-def compute_grid(mdistance):
-    # get the min and max latitude, longitude of the datapoints
-    bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
+@app.route('/creategrids')
+def create_grids():
+    grid_cell_count = {}
+    grid_geojson_parsed_list = []
+    polygon_list = []
 
-    x = bbox[1]
-    xf = bbox[3]
-    y = bbox[0]
-    yf = bbox[2]
+    for element in GRID_DISTANCES_LIST:
+        distance = get_meters(element[0], element[1])
+        grid = create_grid(distance)
+        grid_geojson = grid.to_json()
+        grid_geojson_parsed = json.loads(grid_geojson)
+        polygon = reverse_coordinates(grid_geojson_parsed)
+        # print("polygon",polygon)
+        polygon_list.append(polygon)
+        count_list = get_count_of_grid_new(polygon)
+        print("count_list",count_list)
 
-    x0, y0 = (x, y)
-
-    grid_cells = []
-    while y0 <= yf:
-        while x0 <= xf:
-            grid_cells.append(shapely.geometry.box(x0, y0, x0 + mdistance, y0 + mdistance))
-            x0 = x0 + mdistance
-        x0 = x
-        y0 = y0 + mdistance
-
-    print("grid_cells", grid_cells[0])
-    print("radians", mdistance)
-
-    id = [i for i in range(len(grid_cells))]
-    gridDf = gpd.GeoDataFrame({"id": id, "geometry": grid_cells})
-    gridDf.crs = "EPSG:4326"
-
-    geometry = gridDf["geometry"]
-
-    polygon = geometry.apply(coord_lister)
-
-    coordinates = [[list(y) for y in x] for x in polygon]
-
-    print("coordinates0", coordinates[0])
-
-    data = {
-        'coordinates': coordinates
-    }
-
-    return data
+    return jsonify(polygon_list)
 
 
-def get_crimecounts_forlocation(coordinates, data, distance):
-    Model.create_index([("point", "2dsphere")])
-
-    longitude = coordinates[0]
-    latitude = coordinates[1]
-
-    # Extract points from filtered dataset
-    # save filtered dataset to model
-    model = [FilteredModel(INCIDENT_NO=item['INCIDENT_NO'], point=item['point'],
-                           ADDRESS_X=item['ADDRESS_X'], OFFENSE=item['OFFENSE']) for item in data]
-
-    FilteredModel.objects.insert(model)
-
-    # model = return_data_duplicates(FilteredModel)
-    # print("newmodelobjects",model.objects.all())
-
-    newmodelobjects = FilteredModel.objects.all()
-    # print("newmodelobjects", newmodelobjects)
-
-    incidentnorecordset = set(record.INCIDENT_NO for record in newmodelobjects)
-
-    count = 0
-    for r in incidentnorecordset:
-        # get the first record that matches with the incident no. Avoids duplicate records
-        firstdocumentmatch = FilteredModel.objects(INCIDENT_NO=r).first()
-        print("firstDocumentMatch", firstdocumentmatch['ADDRESS_X'], firstdocumentmatch['point'])
-        # pointsfoundwithinradius = FilteredModel.objects(point=firstdocumentmatch['point'],
-        #                                                 point__geo_within_sphere=[(longitude, latitude), 0.001])
-        # vr
-        # available_results = [[result.point,result.ADDRESS_X]for result in pointsfoundwithinradius]
-        #
-        # print("pointsfoundwithinradius",available_results[0],available_results[1])
-        pointsfoundwithinradius = FilteredModel.objects(INCIDENT_NO=r,
-                                                        point__geo_within_sphere=[(longitude, latitude),
-                                                                                  distance])
-        available_points = pointsfoundwithinradius.first()
-
-        if pointsfoundwithinradius:
-            print("point found within radius")
-            print("pointsfoundwithinradius", available_points['ADDRESS_X'], available_points['point'])
-            count += 1
-        else:
-            print("point not found within radius")
-
-    # filteredrecordset = set(record for record in newmodelobjects)
-    # print("get all reccords")
-    # results = []
-    # for m in newmodelobjects:
-    #     print(f"ADDRESS_X: {m.ADDRESS_X}",f"point: {m.point}")
-    #     pointsfoundwithinradius = FilteredModel.objects(point=m.point,point__geo_within_sphere=[center_point, radius/earth_radius])
-    #     if pointsfoundwithinradius:
-    #         results.append(pointsfoundwithinradius)
-    #     else:
-    #         print("No points found")
-    return count
-
-
-def get_radius(radius, unit):
-    radius = float(radius)
-    try:
-        if unit == "meters":
-            earthradius = 6378.1
-            # convert meters to kilometers
-            radius = radius / 1000
-        elif unit == "miles":
-            earthradius = 3963.2
-        else:
-            earthradius = 6378.1
-    except Exception as e:
-        print("Error: ", e)
-    finally:
-        radians = radius / earthradius
-
-    return radians
 
 
 @app.route('/success/<safe>/<work>/<current>/<interval>/<radius>/<unit>')
@@ -489,21 +344,17 @@ def success(safe, work, current, interval, radius, unit):
         aggregate_data = load_dataset()
         data = filter_dataset(user.interval, aggregate_data)
         filtered_data_list = [doc for doc in data]
-
         radians = get_radius(user.radius, user.units)
-        countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, radians)
-        countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, radians)
-        countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, radians)
+        meters = get_meters(user.radius, user.units)
+
+        countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, meters)
+        countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, meters)
+        countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, meters)
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent)
+        #grid_geojson_parsed = grid_geojson_parsed_list[0]
+        #griddata=json.dumps(grid_geojson_parsed)
 
-        grid_gdf = create_grid()
-        grid_geojson = grid_gdf.to_json()
-        grid_geojson_parsed = json.loads(grid_geojson)
-
-        polygon = reverse_coordinates(grid_geojson_parsed)
-        #get_count_of_grid(polygon)
-
-        return render_template('success.html', key=key, griddata=json.dumps(grid_geojson_parsed))
+        return render_template('success.html', key=key)
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
 
