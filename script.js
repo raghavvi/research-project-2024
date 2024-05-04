@@ -1,77 +1,36 @@
-const minAngle = -150;
-const maxAngle = 150;
-const range = maxAngle - minAngle;
-let currentValue = 50; // Initial value (between 0 and 100)
+ var minTemperature = 0;
+        var maxTemperature = 1;
+        var step = 0.05;
+        var maxThermometerHeight = 200;
 
-const svg = d3.select("#gauge")
-    .attr("width", 300)
-    .attr("height", 300);
+        // Create thermometer scale
+        var thermometerScale = d3.scaleLinear()
+            .domain([minTemperature, maxTemperature])
+            .range([0, maxThermometerHeight]);
 
-const gauge = svg.append("g")
-    .attr("transform", "translate(150, 150)");
+        // Data (temperature value)
+        var temperature = 0.5; // Example temperature value (can be dynamic)
 
-const backgroundArc = d3.arc()
-    .innerRadius(80)
-    .outerRadius(100)
-    .startAngle(deg2rad(minAngle))
-    .endAngle(deg2rad(maxAngle));
+        // Create thermometer
+        var svg = d3.select("#thermometer")
+            .append("svg")
+            .attr("class", "thermometer")
+            .attr("width", 50)
+            .attr("height", maxThermometerHeight);
 
-gauge.append("path")
-    .attr("class", "background")
-    .attr("d", backgroundArc);
+        // Add mercury
+        var mercury = svg.append("rect")
+            .attr("class", "mercury")
+            .attr("height", thermometerScale(temperature))
+            .attr("width", "100%");
 
-const valueArc = d3.arc()
-    .innerRadius(80)
-    .outerRadius(100);
+        // Function to update temperature
+        function updateTemperature(newTemperature) {
+            temperature = newTemperature;
+            mercury.transition().duration(500).attr("height", thermometerScale(temperature));
+        }
 
-const valuePath = gauge.append("path")
-    .datum({ endAngle: deg2rad(minAngle) })
-    .attr("class", "value")
-    .attr("d", valueArc);
-
-const knob = d3.select("#knob");
-
-// Attach knob drag behavior
-knob.call(d3.drag()
-    .on("start", dragstarted)
-    .on("drag", dragged)
-    .on("end", dragended));
-
-updateGauge(currentValue);
-
-function deg2rad(deg) {
-    return (deg - 90) * Math.PI / 180;
-}
-
-function arcTween(d) {
-    const interpolate = d3.interpolate(d.endAngle, d.endAngle);
-    return function (t) {
-        d.endAngle = interpolate(t);
-        return valueArc(d);
-    };
-}
-
-function dragstarted(event) {
-    d3.select(this).raise().classed("active", true);
-}
-
-function dragged(event) {
-    const x = event.x - 150;
-    const y = event.y - 150;
-    const angle = Math.atan2(y, x) * 180 / Math.PI;
-    if (angle >= minAngle && angle <= maxAngle) {
-        currentValue = ((angle - minAngle) / range) * 100;
-        updateGauge(currentValue);
-    }
-}
-
-function dragended(event) {
-    d3.select(this).classed("active", false);
-}
-
-function updateGauge(value) {
-    knob.style("transform", `rotate(${minAngle + (range * value / 100)}deg)`);
-    valuePath.transition()
-        .duration(1000)
-        .attrTween("d", arcTween);
-}
+        // Example: Update temperature after 2 seconds
+        setTimeout(function() {
+            updateTemperature(0.75); // Change the temperature to 0.75 (example)
+        }, 2000);

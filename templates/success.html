@@ -4,16 +4,36 @@
 
 <head>
     <style>
-
         .float-element {
             width: 50%;
             float: left;
             display: block;
         }
 
+        .thermometer {
+            top: 35px;
+            width: 100px;
+            height: 400px;
+            background-color: blue;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+
+        .mercury {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: red; /* Set the color of the mercury */
+        }
+
         .thermometer-container {
             height: 485px;
             background-color: white;
+        }
+
+        .button-container {
+            width: 100%;
+            background-color: #272343;
         }
 
        .map-container {
@@ -50,37 +70,150 @@
         }
 
     </style>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
 </head>
 
 <div class="float-element">
     <div class="thermometer-container">
-        {% if grid_count_list %}
-        <script>
-            // Load JSON data asynchronously
-            fetch('/data')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('visualization').style.display = 'block';
-
-                    // Use D3 to create your visualization using the 'data' variable
-                    // For example:
-                    // var data = data;
-                    // Your D3 code here...
-                })
-                .catch(error => console.error('Error loading data:', error));
-        </script>
-
-        {% else %}
-            <div class="loading-page">
-                <div class="loading-spinner"></div>
-                <p>Loading...</p>
-            </div>
-            <div id="visualization" style="display: none;"></div>
-        {% endif %}
-
+        <div class="button-container">
+            <button id="btn">Get Thermometer</button>
+        </div>
+<!--            <div id="thermometer"></div>-->
+            <div id="histogram"></div>
     </div>
 </div>
+
+<script>
+    // Add an event listener to the button
+
+    var grid = "{{grid}}";
+    var safe = "{{safe}}";
+    var work = "{{work}}";
+    var current = "{{current}}";
+
+    var dataUrl = "/data/" + grid + "/" + safe + "/" + work + "/" + current;
+
+    function addHistogram(data) {
+       // set the dimensions and margins of the graph
+       console.log("Histogram function");
+
+       var grid = data['grid'];
+       var safe = data['safecount'];
+       var work = data['workcount'];
+       var current = data['currentcount'];
+
+       console.log("grid", grid);
+
+       const margin = {top: 10, right: 30, bottom: 30, left: 40},
+       width = 460 - margin.left - margin.right,
+       height = 400 - margin.top - margin.bottom;
+
+       // append the svg object to the body of the page
+       const svg = d3.select("#histogram")
+       .append("svg")
+       .attr("width", width + margin.left + margin.right)
+       .attr("height", height + margin.top + margin.bottom)
+       .append("g")
+       .attr("transform",
+       `translate(${margin.left},${margin.top})`);
+
+       // X axis: scale and draw:
+       const x = d3.scaleLinear()
+       .domain([0,10])
+       .range([0, width])
+       svg.append("g")
+       .attr("transform", `translate(0, ${height})`)
+       .call(d3.axisBottom(x));
+
+       // set the parameters for the histogram
+       const histogram = d3.histogram()
+       .value(function(d) { return d; })
+      .domain(x.domain())  // then the domain of the graphic
+      .thresholds(x.ticks(70)); // then the numbers of bins
+
+       // And apply this function to data to get the bins
+       const bins = histogram(grid);
+       console.log("bins", bins);
+       console.log("The number of bins is " + bins.length)
+
+       // Y axis: scale and draw:
+       const y = d3.scaleLinear()
+       .range([height, 0]);
+       y.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+       svg.append("g")
+       .call(d3.axisLeft(y));
+
+       // append the bar rectangles to the svg element
+       svg.selectAll("rect")
+       .data(bins)
+       .join("rect")
+       .attr("x", 1)
+       .attr("transform", function(d) { return `translate(${x(d.x0)} , ${y(d.length)})`})
+       .attr("width", function(d) { return x(d.x1) - x(d.x0) -1})
+       .attr("height", function(d) { return height - y(d.length); })
+       .style("fill", "#69b3a2");
+<!--       });-->
+
+    }
+
+
+    //old version
+    function getStatsThermometer() {
+        // Domain and range settings
+        var minTemperature = 0;
+        var maxTemperature = 1;
+
+        // Static temperature value
+        var temperature = 0.5; // Example temperature value (can be static or dynamic)
+
+        // Create thermometer scale
+        var thermometerScale = d3.scaleLinear()
+            .domain([minTemperature, maxTemperature])
+            .range([0, 400]); // Adjust the range to match the height of the thermometer
+
+        // Create thermometer
+        var svg = d3.select("#thermometer")
+            .append("svg")
+            .attr("class", "thermometer")
+            .attr("width", 100)
+            .attr("height", 400); // Adjust width and height as needed
+
+        // Circle element for rounded tube top
+        svg.append("circle")
+          .attr("r", 20)
+          .attr("cx", 50)
+          .attr("class", "mercury")
+          .attr("cy", temperature * 400)
+          .style("fill", "#FFC0CB");
+    }
+
+    document.getElementById('btn').addEventListener('click', function() {
+        // Fetch data from the Flask route when the button is clicked
+
+        fetch(dataUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                // Further processing of data
+
+                addHistogram(data);
+
+
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    });
+
+
+</script>
 
 <div class="float-element">
     <div class="map-container">
@@ -88,9 +221,10 @@
     </div>
 </div>
 
+
 <script>
 
-    function myMap() {
+    function initMap() {
         var latitude = 39.134556;
         var longitude = -84.515413;
         var mapProp= {
@@ -154,8 +288,7 @@
 
 </script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key={{key}}&callback=myMap"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{key}}&callback=myMap" async defer></script>
 <script src="https://unpkg.com/@turf/turf"></script>
 
 {% endblock %}
-

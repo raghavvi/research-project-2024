@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
 from shapely.geometry import box
-from pyproj import Transformer
+from pyproj import Transformer, Proj, transform
 from geopy.exc import GeocoderTimedOut
 import geopandas as gpd
 import json
@@ -12,8 +12,9 @@ import os
 from models import db
 from models import Model
 from griddata import gridcounts
+import numpy as np
+import geopy.distance
 
-#TO-DO Need to add a seperate endpoint that computes the grid for different sizes
 
 load_dotenv()
 
@@ -25,17 +26,20 @@ app.config['MONGODB_SETTINGS'] = {
 }
 db.init_app(app)
 
+
 class UserData:
     latitude = None
     longitude = None
     interval = None
     radius = 0
     units = None
+    grid = None
 
     def __init__(self):
         self.safecoordinates = []
         self.workcoordinates = []
         self.currentcoordinates = []
+        self.destinationcoordinates = []
 
     # Convert radius and units (meters) to distance.
     # Create geometry to see if points fall within the radius (safe,current,work)
@@ -52,9 +56,11 @@ class UserData:
         self.currentcoordinates.append(longitude)
         self.currentcoordinates.append(latitude)
 
+    def add_destination_coordinates(self, latitude, longitude):
+        self.destinationcoordinates.append(longitude)
+        self.destinationcoordinates.append(latitude)
 
 def load_dataset():
-    #remove_duplicates()
 
     pipeline = [
         {
@@ -85,7 +91,6 @@ def load_dataset():
     return hour_result_list
 
 
-
 def filter_time_interval(interval, data):
     if interval == "12AM-3AM":
         newlist = [result for result in data if result.get('hour') == '00' or result.get('hour') == '01'
@@ -105,6 +110,16 @@ def filter_time_interval(interval, data):
     elif interval == "8PM-11PM":
         newlist = [result for result in data if result.get('hour') == '20' or result.get('hour') == '21'
                    or result.get('hour') == '22' or result.get('hour') == '23']
+    else:
+        newlist = [result for result in data if result.get('hour') == '00' or result.get('hour') == '01'
+                   or result.get('hour') == '02' or result.get('hour') == '03' or result.get('hour') == '04'
+                   or result.get('hour') == '05' or result.get('hour') == '06' or result.get('hour') == '07'
+                   or result.get('hour') == '08' or result.get('hour') == '09' or result.get('hour') == '10'
+                   or result.get('hour') == '11' or result.get('hour') == '12' or result.get('hour') == '13'
+                   or result.get('hour') == '14' or result.get('hour') == '15' or result.get('hour') == '16'
+                   or result.get('hour') == '17' or result.get('hour') == '18' or result.get('hour') == '19'
+                   or result.get('hour') == '20' or result.get('hour') == '21' or result.get('hour') == '22'
+                   or result.get('hour') == '23']
     return newlist
 
 
@@ -119,8 +134,73 @@ def filter_dataset(interval, data):
 
     return filtered_results
 
-def compute_zscore():
-    print("Starting function")
+def switch_grids(grid):
+    if grid == "700 meters":
+        return gridcounts["700meters"]
+    elif grid == "750 meters":
+        return gridcounts["750meters"]
+    elif grid == "800 meters":
+        return gridcounts["800meters"]
+    elif grid == "850 meters":
+        return gridcounts["800meters"]
+    if grid == "900 meters":
+        return gridcounts["900meters"]
+    elif grid == "950 meters":
+        return gridcounts["950meters"]
+    elif grid == "1 kilometer":
+        return gridcounts["1kilometer"]
+    elif grid == "1 mile":
+        return gridcounts["1mile"]
+
+@app.route('/data/<grid>/<safe>/<work>/<current>')
+def compared_grid_counts(grid, safe, work, current):
+    safe = int(safe)
+    work = int(work)
+    current = int(current)
+
+    data = {}
+    gridselected = switch_grids(grid)
+    data['grid'] = gridselected
+    data['safecount'] = safe
+    data['workcount'] = work
+    data['currentcount'] = current
+
+    return jsonify(data)
+
+
+@app.route('/data/<grid>/<safe>/<work>/<current>')
+def compute_probabilities(grid, safe, work, current):
+    safe = int(safe)
+    work = int(work)
+    current = int(current)
+
+    data = {}
+
+    griddistance = switch_grids(grid)
+
+    gridcounts = sum(griddistance)
+    gridcountarray = np.array(griddistance)
+    # Test Exclude zeros from the data
+    # nonzero_data = onemilecountarray[onemilecountarray != 0]
+
+    gridcount_mean = np.mean(griddistance)
+    max_gridcount = np.max(gridcountarray)
+    min_grid_probability = 0
+    safe_probability = safe/gridcounts
+    work_probability = work/gridcounts
+    current_probability = current/gridcounts
+    max_grid_probability = max_gridcount/gridcounts
+
+    # 0, mean, radius probability counts
+    data["mingrid_probability"] = min_grid_probability
+    data["safe_probability"] = safe_probability
+    data["work_probability"] = work_probability
+    data["current_probability"] = current_probability
+    data["gridcount_mean"] = gridcount_mean
+    data["max_grid_probability"] = max_grid_probability
+
+    return jsonify(data)
+
 
 def coord_lister(geom):
     coords = list(geom.exterior.coords)
@@ -132,7 +212,6 @@ def get_radius(radius, unit):
     try:
         if unit == "meters":
             earthradius = 6378.1
-            # convert meters to kilometers
             radius = radius / 1000
         elif unit == "miles":
             earthradius = 3963.2
@@ -145,6 +224,7 @@ def get_radius(radius, unit):
         print("radians: ", radians)
     return radians
 
+
 def get_meters(radius, unit):
     radius = int(radius)
     if unit == "meters":
@@ -154,12 +234,13 @@ def get_meters(radius, unit):
     else:
         return radius * 1000
 
+
 def get_crimecounts_forlocation(coordinates, data, distance):
     Model.create_index([("point", "2dsphere")])
 
-    #Return counts of documents
+    # Return counts of documents
     count = Model.objects.all().count()
-    print("count",count)
+    print("count", count)
 
     longitude = coordinates[0]
     latitude = coordinates[1]
@@ -182,7 +263,6 @@ def get_crimecounts_forlocation(coordinates, data, distance):
     distance_near_list = [doc['INCIDENT_NO'] for doc in result]
 
     if len(distance_near_list) != 0:
-        #print("distance_near_list", len(distance_near_list))
         print("distance_near_list", distance_near_list)
     else:
         print("query does not return a result", distance_near_list)
@@ -190,10 +270,7 @@ def get_crimecounts_forlocation(coordinates, data, distance):
 
 
 GRID_DISTANCES_LIST = [
-    (500, "meters"),
-    (1, "miles"),
-    (2, "miles"),
-    (5, "miles")
+    (700, "meters")
 ]
 
 
@@ -201,16 +278,12 @@ def get_count_of_grid_new(polygon_dict):
     start_time = time.time()
     sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
     count_list = [search_within_polygon(sublist) for sublist in sublists]
-    #print("count_list", count_list)
+    # print("count_list", count_list)
     print("--- %s secconds ---" % (time.time() - start_time))
     return count_list
 
 
 def search_within_polygon(sublistelement):
-
-    # print("polygon1 type", type(polygon1))
-    # print("sublistelement type", type(sublistelement))
-    # print("sublistelement", sublistelement)
 
     # start_time = time.time()
     polygon_pipeline = [
@@ -233,9 +306,6 @@ def search_within_polygon(sublistelement):
     polygon_result_list = [doc for doc in result]
     if len(polygon_result_list) != 0:
         print("polygon_result_list", len(polygon_result_list))
-    # else:
-    #     print("query does not return a result", polygon_result_list)
-    # print("--- %s secconds ---" % (time.time() - start_time))
     return len(polygon_result_list)
 
 
@@ -249,14 +319,15 @@ def reverse_coordinates(geojson):
         coordinates = geometry['coordinates']
         for inner_list in coordinates:
             for item in inner_list:
-                reversed_list.append(item[::-1])
+                #reversed_list.append(item[::-1])
+                reversed_list.append(item)
                 listcount += 1
         [reversed_list[listcount: (1 + listcount) * 5]]
 
     return reversed_list
 
 
-def create_grid(cell_size_meters):
+def create_grid2(cell_size_meters):
     bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
 
     minx = bbox[1]
@@ -297,36 +368,105 @@ def create_grid(cell_size_meters):
 
     return grid_gdf
 
+def create_grid(cell_size_meters):
 
-@app.route('/creategrids')
+    epsg4326 = Proj(init='EPSG:4326')
+    epsg3857 = Proj(init='EPSG:3857')
+
+    min_lon, min_lat = -84.8192049318631, 39.0533271607855
+    max_lon, max_lat = -84.2545822217415, 39.3599982625544
+
+    # Transform the bounding box to EPSG:3857
+    min_x, min_y = transform(epsg4326, epsg3857, min_lon, min_lat)
+    max_x, max_y = transform(epsg4326, epsg3857, max_lon, max_lat)
+    bbox_3857 = (min_x, min_y, max_x, max_y)
+
+    # Calculate the size of each grid cell in EPSG:3857
+    width_3857 = bbox_3857[2] - bbox_3857[0]
+    height_3857 = bbox_3857[3] - bbox_3857[1]
+
+    # print("width_3857", width_3857)
+    # print("height_3857", height_3857)
+
+    # Calculate the number of rows and columns
+    num_rows = int(height_3857 / cell_size_meters)
+    num_cols = int(width_3857 / cell_size_meters)
+
+    # print("num_rows",num_rows)
+    # print("num_cols",num_cols)
+
+    cell_width_3857 = width_3857 / num_cols
+    cell_height_3857 = height_3857 / num_rows
+
+    # print("cell_width_3857",cell_width_3857)
+    # print("cell_height_3857",cell_height_3857)
+
+    # Create a grid of squares
+    grid = []
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # Calculate the coordinates of the current grid cell in EPSG:3857
+            x_min = bbox_3857[0] + j * cell_width_3857
+            y_min = bbox_3857[1] + i * cell_height_3857
+            x_max = x_min + cell_width_3857
+            y_max = y_min + cell_height_3857
+
+            # Transform the EPSG:3857 coordinates back to EPSG:4326
+            x_min_4326, y_min_4326 = transform(epsg3857, epsg4326, x_min, y_min)
+            x_max_4326, y_max_4326 = transform(epsg3857, epsg4326, x_max, y_max)
+
+            # Create a Shapely geometry box for the current grid cell in EPSG:4326
+            cell_4326 = box(x_min_4326, y_min_4326, x_max_4326, y_max_4326)
+
+            # Append the geometry box to the grid
+            grid.append(cell_4326)
+
+    # Create a GeoDataFrame from the grid cells
+    grid_gdf = gpd.GeoDataFrame(geometry=grid, crs="EPSG:4326")
+
+    return grid_gdf
+
+
+@app.route('/createnewgrid')
 def create_grids():
-    grid_cell_count = {}
-    grid_geojson_parsed_list = []
     polygon_list = []
 
     for element in GRID_DISTANCES_LIST:
         distance = get_meters(element[0], element[1])
+        print("distance",distance)
         grid = create_grid(distance)
         grid_geojson = grid.to_json()
         grid_geojson_parsed = json.loads(grid_geojson)
         polygon = reverse_coordinates(grid_geojson_parsed)
-        # print("polygon",polygon)
+        # needs to be lon, lat pair -84, 30
+        print("polygon",polygon)
         polygon_list.append(polygon)
         count_list = get_count_of_grid_new(polygon)
-        print("count_list",count_list)
+        print("element",element)
+        print("count_list", count_list)
 
     return jsonify(polygon_list)
 
+@app.route('/testgrids')
+def test_grids():
+    distance = get_meters(950,"meters")
+    grid = create_grid(distance)
+    grid_geojson = grid.to_json()
+    grid_geojson_parsed = json.loads(grid_geojson)
+    polygon = reverse_coordinates(grid_geojson_parsed)
 
+    return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
 
-
-@app.route('/success/<safe>/<work>/<current>/<interval>/<radius>/<unit>')
-def success(safe, work, current, interval, radius, unit):
+@app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
+def success(safe, work, current, destination, interval, gridsize):
     geolocator = Nominatim(user_agent="project-flask")
     try:
         safelocation = geolocator.geocode(safe)
         worklocation = geolocator.geocode(work)
         currentlocation = geolocator.geocode(current)
+        destinationlocation = geolocator.geocode(destination)
+        print("destinationlocation",destinationlocation)
+        #Need to add destination to user class and add count function
         user = UserData()
         user.add_safe_coordinates(safelocation.latitude, safelocation.longitude)
         print(user.safecoordinates)
@@ -337,24 +477,36 @@ def success(safe, work, current, interval, radius, unit):
         user.add_current_coordinates(currentlocation.latitude, currentlocation.longitude)
         print(user.currentcoordinates)
 
+        user.add_destination_coordinates(destinationlocation.latitude, destinationlocation.longitude)
+        print(user.destinationcoordinates)
+
+        gridsplit = gridsize.split()
+        radius = gridsplit[0]
+        unit = gridsplit[1]
+        # print("radius",radius)
+        # print("unit",unit)
+
         user.interval = interval
         user.radius = radius
         user.units = unit
+        user.grid = gridsize
 
         aggregate_data = load_dataset()
         data = filter_dataset(user.interval, aggregate_data)
         filtered_data_list = [doc for doc in data]
-        radians = get_radius(user.radius, user.units)
+
         meters = get_meters(user.radius, user.units)
 
         countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, meters)
         countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, meters)
         countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, meters)
-        print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent)
-        #grid_geojson_parsed = grid_geojson_parsed_list[0]
-        #griddata=json.dumps(grid_geojson_parsed)
+        countdestination = get_crimecounts_forlocation(user.destinationcoordinates, filtered_data_list, meters)
+        print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination", countdestination)
 
-        return render_template('success.html', key=key)
+        #compared_grid_counts(user.grid, countsafe, countwork, countcurrent)
+        compute_probabilities(user.grid, countsafe, countwork, countcurrent)
+
+        return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork, current=countcurrent, destination=countdestination)
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
 
@@ -365,12 +517,14 @@ def home():
         safe = request.form.get("safe")
         work = request.form.get("work")
         current = request.form.get("current")
+        destination = request.form.get("destination")
         interval = request.form.get("interval")
-        radius = request.form.get("radius")
-        unit = request.form.get("unit")
+        # radius = request.form.get("radius")
+        # unit = request.form.get("unit")
+        gridsize = request.form.get("gridsize")
 
-        return redirect(url_for('success', safe=safe, work=work, current=current,
-                                interval=interval, radius=radius, unit=unit))
+        return redirect(url_for('success', safe=safe, work=work, current=current, destination=destination,
+                                interval=interval, gridsize=gridsize))
 
     return render_template("index.html")
 

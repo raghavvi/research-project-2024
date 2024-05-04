@@ -126,7 +126,6 @@
           border: none;
           border-radius: 4px;
           cursor: pointer;
-<!--          float: right;-->
         }
 
         input[type=submit]:hover {
@@ -234,8 +233,13 @@
                                 <input class="search" name="current" id="current" type="text" placeholder="Search Location..."/>
                                 <br>
                                 <br>
+                                <label>Enter a search location</label>
+                                <input class="search" name="destination" id="destination" type="text" placeholder="Search Location..."/>
+                                <br>
+                                <br>
                                 <label>Select 3 hour time interval values</label>
                                 <select name="interval" id="interval">
+                                    <option value="12AM-11PM">12AM-11PM</option>
                                     <option value="12AM-3AM">12AM-3AM</option>
                                     <option value="4AM-7AM">4AM-7AM</option>
                                     <option value="8AM-11AM">8AM-11AM</option>
@@ -245,23 +249,21 @@
                                 </select>
                                 <br>
                                 <br>
-                                <label>Enter a radius</label>
-                                <br>
-                                <input name="radius" id="radius" type="text"/>
-                                    <span>
-                                    <select name="unit" id="unit">
-                                        <option value="meters">meters</option>
-                                        <option value="kilometers">kilometers</option>
-                                        <option value="miles">miles</option>
+                                <label>Select a radius</label>
+                                <div class="grid-size-dropdown-elemnet">
+                                    <select name="gridsize" id="gridsize">
+                                        <option value="700 meters">700 meters</option>
+                                        <option value="750 meters">750 meters</option>
+                                        <option value="800 meters">800 meters</option>
+                                        <option value="850 meters">850 meters</option>
+                                        <option value="900 meters">900 meters</option>
+                                        <option value="950 meters">950 meters</option>
+                                        <option value="1 kilometer">1 kilometer</option>
+                                        <option value="1 mile">1 mile</option>
                                     </select>
-                                    </span>
+                                </div>
                                 <br>
-                                <br>
-                                <br>
-<!--                                <br>-->
                                <input class="button" type="submit" />
-
-
                         </form>
                     </div>
 
@@ -312,6 +314,7 @@
           safe:$("#safe").val(),
           work:$("#work").val(),
           current:$("#current").val(),
+          destination:$("#destination").val(),
           interval:$("#interval").val(),
           radius:$("#radius").val()
           unit:$("#unit").val()
