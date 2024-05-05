@@ -105,10 +105,11 @@
         }
 
         #main-container {
-            position: relative;
+            position: flex;
             height: calc(90% - 20px);
             margin-bottom: 20px;
-            background-color: #272343;
+            overflow: hidden; /* Clearfix to contain floats */
+            background-color: green;
         }
 
         #vis-container {
@@ -200,6 +201,38 @@
         .chart-third{fill:#e92213}
         .needle,.needle-center{fill:#464A4F}
 
+        .split {
+            width: 50%;
+            overflow-x: visible;
+            padding-top: 20px;
+        }
+
+        .left {
+            float: left; /* Float left for left section */
+            width: 45%; /* Take up half of the container */
+            box-sizing: border-box; /* Include padding and border in the width */
+            display: block;
+            padding: 20px;
+            background-color: blue;
+            height: 100%;
+        }
+
+        .right {
+            float: right; /* Float right for right section */
+            width: 55%; /* Take up half of the container */
+            box-sizing: border-box; /* Include padding and border in the width */
+            display: block;
+            padding: 20px;
+            background-color: red;
+            height: 100%;
+        }
+
+        .centered {
+          text-align: center;
+        }
+
+
+
 
     </style>
 
@@ -230,7 +263,7 @@
                                 <br>
                                 <br>
                                 <label>Enter a current location</label>
-                                <input class="search" name="current" id="current" type="text" placeholder="Search Location..."/>
+                                <input class="search" name="current" id="current" type="text" placeholder="Search Location.."/>
                                 <br>
                                 <br>
                                 <label>Enter a search location</label>
@@ -274,11 +307,24 @@
                 <button onclick="openForm()">Set Parameters</button>
             </div>
 
+             <div id ="main-container">
 
-             <div id ="main-container"></div>
-                <section id="vis-container">
-                    {% block content %}{% endblock %}
-                </section>
+                 <div class="left">
+                     <div class="centered">
+                         <h2>Jane Flex</h2>
+                         <p>Some text.</p>
+                     </div>
+                 </div>
+
+                 <div class="right">
+<!--                     <div class="centered">-->
+                         {% block content %}{% endblock %}
+<!--                     </div>-->
+                 </div>
+
+             </div>
+
+
              </div>
 
 

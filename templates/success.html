@@ -4,34 +4,39 @@
 
 <head>
     <style>
-        .float-element {
-            width: 50%;
-            float: left;
+        .vis-container {
+            position: relative;
+            right: 2px;
+            height: 410px;
+            width: 145px;
             display: block;
+            background-color: yellow;
         }
 
         .thermometer {
-            top: 35px;
-            width: 100px;
-            height: 400px;
+            top: 0;
+            width: 40px;
+            height: 80px;
             background-color: blue;
             border: 1px solid #ccc;
             position: relative;
         }
 
-        .mercury {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background-color: red; /* Set the color of the mercury */
-        }
-
         .thermometer-container {
-            height: 485px;
+            height: 350px;
             background-color: white;
         }
 
+        .container {
+            position: relative;
+            height: 480px;
+            width: 135px;
+            left: -5px;
+        }
+
         .button-container {
+            position: absolute;
+            bottom: 15px;
             width: 100%;
             background-color: #272343;
         }
@@ -75,13 +80,16 @@
 
 </head>
 
-<div class="float-element">
-    <div class="thermometer-container">
-        <div class="button-container">
-            <button id="btn">Get Thermometer</button>
-        </div>
-<!--            <div id="thermometer"></div>-->
-            <div id="histogram"></div>
+<div class="container">
+    <div class="vis-container">
+        Text
+<!--        <div class="thermometer-container">-->
+<!--            <div id="histogram"></div>-->
+<!--        </div>-->
+    </div>
+
+    <div class="button-container">
+        <button id="btn">Get Thermometer</button>
     </div>
 </div>
 
