@@ -56,17 +56,16 @@
 
          .leftbox {
             font-size: 16px;
-            position: absolute;
+            position: relative;
             display: none;
-            width: 275px;
             box-sizing: border-box;
-            height: 475px;
             background-color: white;
-            z-index: 999;
             padding-left: 15px;
             opacity: 0.95;
-            top: 5%;
-            left: 2%;
+            width: 235px;
+            height: 460px;
+            left: 0;
+            z-index: 999;
         }
 
         input[type=text].search {
@@ -95,13 +94,6 @@
 
         button:active {
           background-color: #C0C0C0;
-        }
-
-        .button-container {
-            width: 100%;
-            background-color: #272343;
-            display: flex;
-            right: 2px;
         }
 
         #main-container {
@@ -183,38 +175,23 @@
             margin: 20px;
         }
 
-        #knob {
-            width: 20px;
-            height: 20px;
-            background: #3498db;
-            border-radius: 50%;
-            position: absolute;
-            top: 140px;
-            left: 140px;
-            cursor: pointer;
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .chart-gauge{}
-        .chart-first{fill:#458B00}
-        .chart-second{fill:#e6e600}
-        .chart-third{fill:#e92213}
-        .needle,.needle-center{fill:#464A4F}
-
-        .split {
-            width: 50%;
-            overflow-x: visible;
-            padding-top: 20px;
-        }
-
-        .left {
-            float: left; /* Float left for left section */
-            width: 45%; /* Take up half of the container */
+        .app-screen {
+            width: 100%; /* Take up half of the container */
             box-sizing: border-box; /* Include padding and border in the width */
             display: block;
             padding: 20px;
             background-color: blue;
             height: 100%;
+            position: relative;
+        }
+
+        .button-container {
+            width: 100%;
+            background-color: blue;
+            display: block;
+            left: 0;
+            position: absolute;
+            top: 0;
         }
 
         .right {
@@ -231,8 +208,20 @@
           text-align: center;
         }
 
+        .map-container {
+            position: relative;
+            height: 100%;
+            width: 100%; /* Adjust width as needed */
+        }
 
-
+       #map {
+            position: absolute;
+            top: 5px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
     </style>
 
@@ -240,6 +229,25 @@
 </head>
 
 <body>
+
+<script>
+
+    function initMap() {
+        var latitude = 39.134556;
+        var longitude = -84.515413;
+        var mapProp= {
+          center:new google.maps.LatLng(latitude,longitude),
+          zoom:17,
+        };
+
+        var map = new google.maps.Map(document.getElementById("map"),mapProp);
+
+    }
+
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{key}}&callback=initMap" async defer></script>
+
 
 <div class="container">
     <div class="phone-container">
@@ -249,77 +257,73 @@
             </div>
 
 
-                <div class="leftbox" id="myForm">
-                    <span class="close" onclick="closeForm()">&times;</span>
-                    <div id="wrap">
-                        <form method="post" id="formElement">
-                                <br>
-                                <label>Enter a safe location</label>
-                                <input class="search" name="safe" id="safe" type="text" placeholder="Search Location..."/>
-                                <br>
-                                <br>
-                                <label>Enter a work location</label>
-                                <input class="search" name="work" id="work" type="text" placeholder="Search Location..."/>
-                                <br>
-                                <br>
-                                <label>Enter a current location</label>
-                                <input class="search" name="current" id="current" type="text" placeholder="Search Location.."/>
-                                <br>
-                                <br>
-                                <label>Enter a search location</label>
-                                <input class="search" name="destination" id="destination" type="text" placeholder="Search Location..."/>
-                                <br>
-                                <br>
-                                <label>Select 3 hour time interval values</label>
-                                <select name="interval" id="interval">
-                                    <option value="12AM-11PM">12AM-11PM</option>
-                                    <option value="12AM-3AM">12AM-3AM</option>
-                                    <option value="4AM-7AM">4AM-7AM</option>
-                                    <option value="8AM-11AM">8AM-11AM</option>
-                                    <option value="12PM-3PM">12PM-3PM</option>
-                                    <option value="4PM-7PM">4PM-7PM</option>
-                                    <option value="8PM-11PM">8PM-11PM</option>
-                                </select>
-                                <br>
-                                <br>
-                                <label>Select a radius</label>
-                                <div class="grid-size-dropdown-elemnet">
-                                    <select name="gridsize" id="gridsize">
-                                        <option value="700 meters">700 meters</option>
-                                        <option value="750 meters">750 meters</option>
-                                        <option value="800 meters">800 meters</option>
-                                        <option value="850 meters">850 meters</option>
-                                        <option value="900 meters">900 meters</option>
-                                        <option value="950 meters">950 meters</option>
-                                        <option value="1 kilometer">1 kilometer</option>
-                                        <option value="1 mile">1 mile</option>
-                                    </select>
-                                </div>
-                                <br>
-                               <input class="button" type="submit" />
-                        </form>
-                    </div>
-
-                </div>
-
-
-            <div class="button-container">
-                <button onclick="openForm()">Set Parameters</button>
-            </div>
-
              <div id ="main-container">
 
-                 <div class="left">
-                     <div class="centered">
-                         <h2>Jane Flex</h2>
-                         <p>Some text.</p>
-                     </div>
-                 </div>
+                 <div class="app-screen">
 
-                 <div class="right">
-<!--                     <div class="centered">-->
+                     <div class="button-container">
+                         <button onclick="openForm()">Set Parameters</button>
+                     </div>
+
+                     <div class="leftbox" id="myForm">
+                         <span class="close" onclick="closeForm()">&times;</span>
+                         <div id="wrap">
+                             <form method="post" id="formElement">
+                                 <br>
+                                 <label>Enter a safe location</label>
+                                 <input class="search" name="safe" id="safe" type="text" placeholder="Search Location..."/>
+                                 <br>
+                                 <br>
+                                 <label>Enter a work location</label>
+                                 <input class="search" name="work" id="work" type="text" placeholder="Search Location..."/>
+                                 <br>
+                                 <br>
+                                 <label>Enter a current location</label>
+                                 <input class="search" name="current" id="current" type="text" placeholder="Search Location.."/>
+                                 <br>
+                                 <br>
+                                 <label>Enter a search location</label>
+                                 <input class="search" name="destination" id="destination" type="text" placeholder="Search Location..."/>
+                                 <br>
+                                 <br>
+                                 <label>Select 3 hour time interval values</label>
+                                 <select name="interval" id="interval">
+                                     <option value="12AM-11PM">12AM-11PM</option>
+                                     <option value="12AM-3AM">12AM-3AM</option>
+                                     <option value="4AM-7AM">4AM-7AM</option>
+                                     <option value="8AM-11AM">8AM-11AM</option>
+                                     <option value="12PM-3PM">12PM-3PM</option>
+                                     <option value="4PM-7PM">4PM-7PM</option>
+                                     <option value="8PM-11PM">8PM-11PM</option>
+                                 </select>
+                                 <br>
+                                 <br>
+                                 <label>Select a radius</label>
+                                 <div class="grid-size-dropdown-elemnet">
+                                     <select name="gridsize" id="gridsize">
+                                         <option value="700 meters">700 meters</option>
+                                         <option value="750 meters">750 meters</option>
+                                         <option value="800 meters">800 meters</option>
+                                         <option value="850 meters">850 meters</option>
+                                         <option value="900 meters">900 meters</option>
+                                         <option value="950 meters">950 meters</option>
+                                         <option value="1 kilometer">1 kilometer</option>
+                                         <option value="1 mile">1 mile</option>
+                                     </select>
+                                 </div>
+                                 <br>
+                                 <input class="button" type="submit" />
+                             </form>
+                         </div>
+                     </div>
+
+                         <div class="map-container">
+                             <div id="map"></div>
+                         </div>
+
+
                          {% block content %}{% endblock %}
-<!--                     </div>-->
+
                  </div>
 
              </div>

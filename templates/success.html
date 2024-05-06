@@ -29,16 +29,29 @@
 
         .container {
             position: relative;
-            height: 480px;
-            width: 135px;
-            left: -5px;
+            width: 100%;
+            height: 100%;
         }
 
-        .button-container {
+        .button-vis-container {
             position: absolute;
-            bottom: 15px;
-            width: 100%;
+            right: 55px;
+            bottom: 105px;
+            width: 40px;
+            height: 50px;
             background-color: #272343;
+        }
+
+        .bottom {
+            position: absolute;
+            width: 100%; /* Take up half of the container */
+            box-sizing: border-box; /* Include padding and border in the width */
+            display: block;
+            background-color: red;
+            height: 55%;
+            bottom: 0;
+            left: 0;
+             z-index: 999999;
         }
 
        .map-container {
@@ -80,18 +93,27 @@
 
 </head>
 
-<div class="container">
-    <div class="vis-container">
-        Text
+<!--<div class="container">-->
+<!--    <div class="vis-container">-->
+<!--        Text-->
 <!--        <div class="thermometer-container">-->
-<!--            <div id="histogram"></div>-->
+<!--            <div id="histogram2"></div>-->
 <!--        </div>-->
-    </div>
+<!--    </div>-->
+<!--    <div class="button-vis-container">-->
+<!--        <button id="btn">Get Thermometer</button>-->
+<!--    </div>-->
+<!--</div>-->
 
-    <div class="button-container">
-        <button id="btn">Get Thermometer</button>
-    </div>
+<div class="bottom">
+    Bottom Element
+
+<!--    <div class="thermometer-container">-->
+<!--        <div id="histogram"></div>-->
+<!--    </div>-->
+
 </div>
+
 
 <script>
     // Add an event listener to the button
@@ -223,11 +245,11 @@
 
 </script>
 
-<div class="float-element">
-    <div class="map-container">
-        <div id="map"></div>
-    </div>
-</div>
+<!--<div class="float-element">-->
+<!--    <div class="map-container">-->
+<!--        <div id="map"></div>-->
+<!--    </div>-->
+<!--</div>-->
 
 
 <script>
