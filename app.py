@@ -1,5 +1,9 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
+
+#from django.db.models import Q
+from mongoengine.queryset.visitor import Q
+#from mongoengine import Q
 from shapely.geometry import box
 from pyproj import Transformer, Proj, transform
 from geopy.exc import GeocoderTimedOut
@@ -14,7 +18,6 @@ from models import Model
 from griddata import gridcounts
 import numpy as np
 import geopy.distance
-
 
 load_dotenv()
 
@@ -61,7 +64,6 @@ class UserData:
         self.destinationcoordinates.append(latitude)
 
 def load_dataset():
-
     pipeline = [
         {
             '$addFields': {
@@ -152,6 +154,7 @@ def switch_grids(grid):
     elif grid == "1 mile":
         return gridcounts["1mile"]
 
+
 @app.route('/data/<grid>/<safe>/<work>/<current>')
 def compared_grid_counts(grid, safe, work, current):
     safe = int(safe)
@@ -178,6 +181,8 @@ def compute_probabilities(grid, safe, work, current):
 
     griddistance = switch_grids(grid)
 
+    #data = gridcounts["700meters:12AM-3AM"]
+
     gridcounts = sum(griddistance)
     gridcountarray = np.array(griddistance)
     # Test Exclude zeros from the data
@@ -186,10 +191,10 @@ def compute_probabilities(grid, safe, work, current):
     gridcount_mean = np.mean(griddistance)
     max_gridcount = np.max(gridcountarray)
     min_grid_probability = 0
-    safe_probability = safe/gridcounts
-    work_probability = work/gridcounts
-    current_probability = current/gridcounts
-    max_grid_probability = max_gridcount/gridcounts
+    safe_probability = safe / gridcounts
+    work_probability = work / gridcounts
+    current_probability = current / gridcounts
+    max_grid_probability = max_gridcount / gridcounts
 
     # 0, mean, radius probability counts
     data["mingrid_probability"] = min_grid_probability
@@ -229,7 +234,7 @@ def get_meters(radius, unit):
     radius = int(radius)
     if unit == "meters":
         return radius
-    elif unit == "miles":
+    elif unit == "mile":
         return radius * 1609.34
     else:
         return radius * 1000
@@ -270,21 +275,95 @@ def get_crimecounts_forlocation(coordinates, data, distance):
 
 
 GRID_DISTANCES_LIST = [
-    (700, "meters")
+    # (700, "meters", "All"),
+    (700, "meters", "12AM-3AM")
+    # (700, "meters", "4AM-7AM"),
+    # (700, "meters", "8AM-11AM"),
+    # (700, "meters", "12PM-3PM"),
+    # (700, "meters", "4PM-7PM"),
+    # (700, "meters", "8PM-11PM"),
+    # (750, "meters", "12AM-3AM"),
+    # (750, "meters", "4AM-7AM"),
+    # (750, "meters", "8AM-11AM"),
+    # (750, "meters", "12PM-3PM"),
+    # (750, "meters", "4PM-7PM"),
+    # (750, "meters", "8PM-11PM"),
+    # (800, "meters", "12AM-3AM"),
+    # (800, "meters", "4AM-7AM"),
+    # (800, "meters", "8AM-11AM"),
+    # (800, "meters", "12PM-3PM"),
+    # (800, "meters", "4PM-7PM"),
+    # (800, "meters", "8PM-11PM"),
+    # (850, "meters", "12AM-3AM"),
+    # (850, "meters", "4AM-7AM"),
+    # (850, "meters", "8AM-11AM"),
+    # (850, "meters", "12PM-3PM"),
+    # (850, "meters", "4PM-7PM"),
+    # (850, "meters", "8PM-11PM"),
+    # (900, "meters", "12AM-3AM"),
+    # (900, "meters", "4AM-7AM"),
+    # (900, "meters", "8AM-11AM"),
+    # (900, "meters", "12PM-3PM"),
+    # (900, "meters", "4PM-7PM"),
+    # (900, "meters", "8PM-11PM"),
+    # (950, "meters", "12AM-3AM"),
+    # (950, "meters", "4AM-7AM"),
+    # (950, "meters", "8AM-11AM"),
+    # (950, "meters", "12PM-3PM"),
+    # (950, "meters", "4PM-7PM"),
+    # (950, "meters", "8PM-11PM"),
+    # (1, "kilometer", "12AM-3AM"),
+    # (1, "kilometer", "4AM-7AM"),
+    # (1, "kilometer", "8AM-11AM"),
+    # (1, "kilometer", "12PM-3PM"),
+    # (1, "kilometer", "4PM-7PM"),
+    # (1, "kilometer", "8PM-11PM"),
+    # (1, "mile", "12AM-3AM"),
+    # (1, "mile", "4AM-7AM"),
+    # (1, "mile", "8AM-11AM"),
+    # (1, "mile", "12PM-3PM"),
+    # (1, "mile", "4PM-7PM"),
+    # (1, "mile", "8PM-11PM")
 ]
 
 
-def get_count_of_grid_new(polygon_dict):
+def get_count_of_grid_new(polygon_dict, interval):
     start_time = time.time()
     sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
-    count_list = [search_within_polygon(sublist) for sublist in sublists]
+    count_list = [search_within_polygon(sublist, interval) for sublist in sublists]
     # print("count_list", count_list)
     print("--- %s secconds ---" % (time.time() - start_time))
     return count_list
 
 
-def search_within_polygon(sublistelement):
+def filter_criteria(model, interval):
+    if interval == "12AM-3AM":
+        filter_criteria_interval_one = Q(hour='00') | Q(hour='01') | Q(hour='02') | Q(hour='03')
+        return model.objects.filter(filter_criteria_interval_one)
+    elif interval == "4AM-7AM":
+        # Q(hour='04') | Q(hour='05') | Q(hour='06') | Q(hour='07')
+        filter_criteria_interval_two = Q(hour='04') | Q(hour='05') | Q(hour='06') | Q(hour='07')
+        return model.objects.filter(filter_criteria_interval_two)
+    elif interval == "8AM-11AM":
+        # Q(hour='08') | Q(hour='09') | Q(hour='10') | Q(hour='11')
+        filter_criteria_interval_three =  Q(hour='08') | Q(hour='09') | Q(hour='10') | Q(hour='11')
+        return model.objects.filter(filter_criteria_interval_three)
+    elif interval == "12PM-3PM":
+        # Q(hour='12') | Q(hour='13') | Q(hour='14') | Q(hour='15')
+        filter_criteria_interval_four = Q(hour='12') | Q(hour='13') | Q(hour='14') | Q(hour='15')
+        return model.objects.filter(filter_criteria_interval_four)
+    elif interval == "4PM-7PM":
+        # Q(hour='16') | Q(hour='17') | Q(hour='18') | Q(hour='19')
+        filter_criteria_interval_five = Q(hour='16') | Q(hour='17') | Q(hour='18') | Q(hour='19')
+        return model.objects.filter(filter_criteria_interval_five)
+    elif interval == "8PM-11PM":
+        # Q(hour='20') | Q(hour='21') | Q(hour='22') | Q(hour='23')
+        filter_criteria_interval_six = Q(hour='20') | Q(hour='21') | Q(hour='22') | Q(hour='23')
+        return model.objects.filter(filter_criteria_interval_six)
 
+
+
+def search_within_polygon(sublistelement, interval):
     # start_time = time.time()
     polygon_pipeline = [
         {
@@ -303,11 +382,23 @@ def search_within_polygon(sublistelement):
         }
     ]
     result = Model.objects().aggregate(*polygon_pipeline)
+
+    # first_object_model = Model.objects.first()
+    # print("first_object_model",first_object_model)
+    # filtered_model = filter_criteria(Model, interval)
+    # selected_model = select_interval_type(Model, filtered_model, interval)
+    # result = selected_model.aggregate(*polygon_pipeline)
+
     polygon_result_list = [doc for doc in result]
     if len(polygon_result_list) != 0:
         print("polygon_result_list", len(polygon_result_list))
     return len(polygon_result_list)
 
+def select_interval_type(model,filtered_model,interval):
+    if interval != "All":
+        return filtered_model
+    else:
+        return model.objects().all()
 
 def reverse_coordinates(geojson):
     reversed_list = []
@@ -319,7 +410,7 @@ def reverse_coordinates(geojson):
         coordinates = geometry['coordinates']
         for inner_list in coordinates:
             for item in inner_list:
-                #reversed_list.append(item[::-1])
+                # reversed_list.append(item[::-1])
                 reversed_list.append(item)
                 listcount += 1
         [reversed_list[listcount: (1 + listcount) * 5]]
@@ -369,7 +460,6 @@ def create_grid2(cell_size_meters):
     return grid_gdf
 
 def create_grid(cell_size_meters):
-
     epsg4326 = Proj(init='EPSG:4326')
     epsg3857 = Proj(init='EPSG:3857')
 
@@ -433,29 +523,33 @@ def create_grids():
 
     for element in GRID_DISTANCES_LIST:
         distance = get_meters(element[0], element[1])
-        print("distance",distance)
+        print("distance", distance)
         grid = create_grid(distance)
+        interval = element[2]
+
         grid_geojson = grid.to_json()
         grid_geojson_parsed = json.loads(grid_geojson)
         polygon = reverse_coordinates(grid_geojson_parsed)
-        # needs to be lon, lat pair -84, 30
-        print("polygon",polygon)
+        print("polygon", polygon)
         polygon_list.append(polygon)
-        count_list = get_count_of_grid_new(polygon)
-        print("element",element)
+
+        count_list = get_count_of_grid_new(polygon, interval)
+        print("element", element)
         print("count_list", count_list)
 
     return jsonify(polygon_list)
 
+
 @app.route('/testgrids')
 def test_grids():
-    distance = get_meters(950,"meters")
+    distance = get_meters(950, "meters")
     grid = create_grid(distance)
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
     polygon = reverse_coordinates(grid_geojson_parsed)
 
     return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
+
 
 @app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
 def success(safe, work, current, destination, interval, gridsize):
@@ -465,8 +559,8 @@ def success(safe, work, current, destination, interval, gridsize):
         worklocation = geolocator.geocode(work)
         currentlocation = geolocator.geocode(current)
         destinationlocation = geolocator.geocode(destination)
-        print("destinationlocation",destinationlocation)
-        #Need to add destination to user class and add count function
+        print("destinationlocation", destinationlocation)
+        # Need to add destination to user class and add count function
         user = UserData()
         user.add_safe_coordinates(safelocation.latitude, safelocation.longitude)
         print(user.safecoordinates)
@@ -501,12 +595,14 @@ def success(safe, work, current, destination, interval, gridsize):
         countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, meters)
         countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, meters)
         countdestination = get_crimecounts_forlocation(user.destinationcoordinates, filtered_data_list, meters)
-        print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination", countdestination)
+        print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination",
+              countdestination)
 
-        #compared_grid_counts(user.grid, countsafe, countwork, countcurrent)
+        # compared_grid_counts(user.grid, countsafe, countwork, countcurrent)
         compute_probabilities(user.grid, countsafe, countwork, countcurrent)
 
-        return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork, current=countcurrent, destination=countdestination)
+        return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
+                               current=countcurrent, destination=countdestination)
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
 

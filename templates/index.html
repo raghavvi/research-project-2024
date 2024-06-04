@@ -62,7 +62,7 @@
             background-color: white;
             padding-left: 15px;
             opacity: 0.95;
-            width: 235px;
+            width: 265px;
             height: 460px;
             left: 0;
             z-index: 999;
@@ -90,6 +90,7 @@
         button {
           background-color: #7c847c;
           border: none;
+          padding: 5px;
         }
 
         button:active {
@@ -98,10 +99,10 @@
 
         #main-container {
             position: flex;
-            height: calc(90% - 20px);
-            margin-bottom: 20px;
+            height: calc(90% - 15px);
+            margin-bottom: 15px;
             overflow: hidden; /* Clearfix to contain floats */
-            background-color: green;
+            background-color: blue;
         }
 
         #vis-container {
@@ -179,7 +180,7 @@
             width: 100%; /* Take up half of the container */
             box-sizing: border-box; /* Include padding and border in the width */
             display: block;
-            padding: 20px;
+<!--            padding: 20px;-->
             background-color: blue;
             height: 100%;
             position: relative;
@@ -192,6 +193,8 @@
             left: 0;
             position: absolute;
             top: 0;
+            z-index: 997;
+            padding: 10px;
         }
 
         .right {

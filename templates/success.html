@@ -13,6 +13,11 @@
             background-color: yellow;
         }
 
+        .thermometer-container {
+            height: 350px;
+            background-color: white;
+        }
+
         .thermometer {
             top: 0;
             width: 40px;
@@ -22,9 +27,26 @@
             position: relative;
         }
 
-        .thermometer-container {
-            height: 350px;
+        .histogram-container {
+            width: 100%;
+            height: 50%;
+            margin:auto;
+            text-align:center;
             background-color: white;
+        }
+
+        #histogram {
+            width: 180px;
+            height: 50px;
+            z-index: 1005;
+        }
+
+        .heatmap-container {
+            width: 100%;
+            height: 50%;
+            margin:auto;
+            text-align:center;
+            background-color: pink;
         }
 
         .container {
@@ -48,7 +70,7 @@
             box-sizing: border-box; /* Include padding and border in the width */
             display: block;
             background-color: red;
-            height: 55%;
+            height: 85%;
             bottom: 0;
             left: 0;
              z-index: 999999;
@@ -93,24 +115,15 @@
 
 </head>
 
-<!--<div class="container">-->
-<!--    <div class="vis-container">-->
-<!--        Text-->
-<!--        <div class="thermometer-container">-->
-<!--            <div id="histogram2"></div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--    <div class="button-vis-container">-->
-<!--        <button id="btn">Get Thermometer</button>-->
-<!--    </div>-->
-<!--</div>-->
-
 <div class="bottom">
     Bottom Element
-
-<!--    <div class="thermometer-container">-->
-<!--        <div id="histogram"></div>-->
-<!--    </div>-->
+    <div class="histogram-container">
+        histogram element
+        <div id="histogram"></div>
+    </div>
+    <div class="heatmap-container">
+        heatmap element
+    </div>
 
 </div>
 
@@ -118,27 +131,21 @@
 <script>
     // Add an event listener to the button
 
-    var grid = "{{grid}}";
-    var safe = "{{safe}}";
-    var work = "{{work}}";
-    var current = "{{current}}";
-
-    var dataUrl = "/data/" + grid + "/" + safe + "/" + work + "/" + current;
-
-    function addHistogram(data) {
+    function addHistogram() {
        // set the dimensions and margins of the graph
        console.log("Histogram function");
 
-       var grid = data['grid'];
-       var safe = data['safecount'];
-       var work = data['workcount'];
-       var current = data['currentcount'];
+        var grid = "{{grid}}";
+        var safe = "{{safe}}";
+        var work = "{{work}}";
+        var current = "{{current}}";
+        var destination = "{{destination}}";
 
        console.log("grid", grid);
 
        const margin = {top: 10, right: 30, bottom: 30, left: 40},
-       width = 460 - margin.left - margin.right,
-       height = 400 - margin.top - margin.bottom;
+       width = 280 - margin.left - margin.right,
+       height = 140 - margin.top - margin.bottom;
 
        // append the svg object to the body of the page
        const svg = d3.select("#histogram")
@@ -219,37 +226,28 @@
           .style("fill", "#FFC0CB");
     }
 
-    document.getElementById('btn').addEventListener('click', function() {
-        // Fetch data from the Flask route when the button is clicked
+    addHistogram()
 
-        fetch(dataUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                // Further processing of data
+<!--fetch(dataUrl)-->
+<!--    .then(response => {-->
+<!--        if (!response.ok) {-->
+<!--            throw new Error('Network response was not ok');-->
+<!--        }-->
+<!--        return response.json();-->
+<!--    })-->
+<!--  .then(data => {-->
+<!--    console.log("data",data);-->
+<!--    // Process your data and create the histogram HTML content-->
+<!--    const histogramHTML = addHistogram(data);-->
 
-                addHistogram(data);
-
-
-            })
-            .catch(error => {
-                console.error('There was a problem with the fetch operation:', error);
-            });
-    });
-
+<!--    // Update the inner HTML of the "histogram" element-->
+<!--    document.getElementById("histogram").innerHTML = histogramHTML;-->
+<!--  })-->
+<!--  .catch(error => {-->
+<!--    console.error('Error fetching data:', error);-->
+<!--  });-->
 
 </script>
-
-<!--<div class="float-element">-->
-<!--    <div class="map-container">-->
-<!--        <div id="map"></div>-->
-<!--    </div>-->
-<!--</div>-->
 
 
 <script>
