@@ -292,8 +292,8 @@ def get_crimecounts_forlocation(coordinates, data, distance):
 
 GRID_DISTANCES_NEW_LIST = [
     # (700, "meters", "All"),
-    (700, "meters", "12AM-3AM")
-    #(700, "meters", "4AM-7AM")
+    # (700, "meters", "12AM-3AM")
+    (700, "meters", "4AM-7AM")
     # (700, "meters", "8AM-11AM"),
     # (700, "meters", "12PM-3PM"),
     # (700, "meters", "4PM-7PM"),
@@ -343,7 +343,7 @@ GRID_DISTANCES_NEW_LIST = [
 ]
 
 GRID_DISTANCES_LIST = [
-    (700, "meters", "12AM-3AM")
+    (700, "meters", "4AM-7AM")
 ]
 
 
@@ -509,7 +509,6 @@ def create_grid(cell_size_meters):
 
     return grid_gdf
 
-
 @app.route('/createnewgrid')
 def create_grids():
     polygon_list = []
@@ -556,6 +555,15 @@ def test_grids():
 
     return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
 
+#create endpoint to delete all documents in PolygonModel. Run each time after createnewgrids endpoint
+@app.route('/deletenewgrid')
+def delete_grid():
+    try:
+        # Delete all documents from the PolygonModel collection
+        deleted_count = PolygonModel.objects().delete()
+        return jsonify({"status": "success", "deleted_count": deleted_count}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
 def success(safe, work, current, destination, interval, gridsize):
