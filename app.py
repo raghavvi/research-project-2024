@@ -26,6 +26,7 @@ app.config['MONGODB_SETTINGS'] = {
 }
 db.init_app(app)
 
+#search polygon: filter by hour before passing pipeline
 
 class UserData:
     latitude = None
