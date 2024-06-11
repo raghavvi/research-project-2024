@@ -1,9 +1,6 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
 
-#from django.db.models import Q
-from mongoengine.queryset.visitor import Q
-#from mongoengine import Q
 from shapely.geometry import box
 from pyproj import Transformer, Proj, transform
 from geopy.exc import GeocoderTimedOut
@@ -13,7 +10,7 @@ from key import key
 from geopy.geocoders import Nominatim
 from dotenv import load_dotenv
 import os
-from models import db
+from models import db, PolygonModel
 from models import Model
 from griddata import gridcounts
 import numpy as np
@@ -63,6 +60,7 @@ class UserData:
         self.destinationcoordinates.append(longitude)
         self.destinationcoordinates.append(latitude)
 
+
 def load_dataset():
     pipeline = [
         {
@@ -92,6 +90,21 @@ def load_dataset():
 
     return hour_result_list
 
+def load_dataset2():
+    hourpipeline = [
+        {
+            '$addFields': {
+                'hour': {
+                    '$substr': ['$time', 0, 2]
+                }
+            }
+        }
+    ]
+
+    hour_result = Model.objects().aggregate(*hourpipeline)
+    hour_result_list = [doc for doc in hour_result]
+
+    return hour_result_list
 
 def filter_time_interval(interval, data):
     if interval == "12AM-3AM":
@@ -100,6 +113,7 @@ def filter_time_interval(interval, data):
     elif interval == '4AM-7AM':
         newlist = [result for result in data if result.get('hour') == '04' or result.get('hour') == '05'
                    or result.get('hour') == '06' or result.get('hour') == '07']
+        print("getting new list", newlist)
     elif interval == "8AM-11AM":
         newlist = [result for result in data if result.get('hour') == '08' or result.get('hour') == '09'
                    or result.get('hour') == '10' or result.get('hour') == '11']
@@ -135,6 +149,7 @@ def filter_dataset(interval, data):
     filtered_results = filter_time_interval(interval, offense_result)
 
     return filtered_results
+
 
 def switch_grids(grid):
     if grid == "700 meters":
@@ -181,7 +196,7 @@ def compute_probabilities(grid, safe, work, current):
 
     griddistance = switch_grids(grid)
 
-    #data = gridcounts["700meters:12AM-3AM"]
+    # data = gridcounts["700meters:12AM-3AM"]
 
     gridcounts = sum(griddistance)
     gridcountarray = np.array(griddistance)
@@ -274,10 +289,10 @@ def get_crimecounts_forlocation(coordinates, data, distance):
     return len(distance_near_list)
 
 
-GRID_DISTANCES_LIST = [
+GRID_DISTANCES_NEW_LIST = [
     # (700, "meters", "All"),
     (700, "meters", "12AM-3AM")
-    # (700, "meters", "4AM-7AM"),
+    #(700, "meters", "4AM-7AM")
     # (700, "meters", "8AM-11AM"),
     # (700, "meters", "12PM-3PM"),
     # (700, "meters", "4PM-7PM"),
@@ -326,44 +341,22 @@ GRID_DISTANCES_LIST = [
     # (1, "mile", "8PM-11PM")
 ]
 
+GRID_DISTANCES_LIST = [
+    (700, "meters", "12AM-3AM")
+]
 
-def get_count_of_grid_new(polygon_dict, interval):
+
+def get_count_of_grid_new(polygon_dict, interval, data):
     start_time = time.time()
     sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
-    count_list = [search_within_polygon(sublist, interval) for sublist in sublists]
+    count_list = [search_within_polygon(sublist, interval, data) for sublist in sublists]
     # print("count_list", count_list)
     print("--- %s secconds ---" % (time.time() - start_time))
     return count_list
 
 
-def filter_criteria(model, interval):
-    if interval == "12AM-3AM":
-        filter_criteria_interval_one = Q(hour='00') | Q(hour='01') | Q(hour='02') | Q(hour='03')
-        return model.objects.filter(filter_criteria_interval_one)
-    elif interval == "4AM-7AM":
-        # Q(hour='04') | Q(hour='05') | Q(hour='06') | Q(hour='07')
-        filter_criteria_interval_two = Q(hour='04') | Q(hour='05') | Q(hour='06') | Q(hour='07')
-        return model.objects.filter(filter_criteria_interval_two)
-    elif interval == "8AM-11AM":
-        # Q(hour='08') | Q(hour='09') | Q(hour='10') | Q(hour='11')
-        filter_criteria_interval_three =  Q(hour='08') | Q(hour='09') | Q(hour='10') | Q(hour='11')
-        return model.objects.filter(filter_criteria_interval_three)
-    elif interval == "12PM-3PM":
-        # Q(hour='12') | Q(hour='13') | Q(hour='14') | Q(hour='15')
-        filter_criteria_interval_four = Q(hour='12') | Q(hour='13') | Q(hour='14') | Q(hour='15')
-        return model.objects.filter(filter_criteria_interval_four)
-    elif interval == "4PM-7PM":
-        # Q(hour='16') | Q(hour='17') | Q(hour='18') | Q(hour='19')
-        filter_criteria_interval_five = Q(hour='16') | Q(hour='17') | Q(hour='18') | Q(hour='19')
-        return model.objects.filter(filter_criteria_interval_five)
-    elif interval == "8PM-11PM":
-        # Q(hour='20') | Q(hour='21') | Q(hour='22') | Q(hour='23')
-        filter_criteria_interval_six = Q(hour='20') | Q(hour='21') | Q(hour='22') | Q(hour='23')
-        return model.objects.filter(filter_criteria_interval_six)
+def search_within_polygon(sublistelement, interval, data):
 
-
-
-def search_within_polygon(sublistelement, interval):
     # start_time = time.time()
     polygon_pipeline = [
         {
@@ -381,24 +374,22 @@ def search_within_polygon(sublistelement, interval):
             }
         }
     ]
-    result = Model.objects().aggregate(*polygon_pipeline)
 
-    # first_object_model = Model.objects.first()
-    # print("first_object_model",first_object_model)
-    # filtered_model = filter_criteria(Model, interval)
-    # selected_model = select_interval_type(Model, filtered_model, interval)
-    # result = selected_model.aggregate(*polygon_pipeline)
-
+    result = PolygonModel.objects.aggregate(*polygon_pipeline)
     polygon_result_list = [doc for doc in result]
-    if len(polygon_result_list) != 0:
-        print("polygon_result_list", len(polygon_result_list))
+
+    # if len(polygon_result_list) != 0:
+        # print("new_data_list", polygon_result_list[0])
+        # print("polygon_result_list", len(polygon_result_list))
     return len(polygon_result_list)
 
-def select_interval_type(model,filtered_model,interval):
+
+def select_interval_type(model, filtered_model, interval):
     if interval != "All":
         return filtered_model
     else:
         return model.objects().all()
+
 
 def reverse_coordinates(geojson):
     reversed_list = []
@@ -458,6 +449,7 @@ def create_grid2(cell_size_meters):
     grid_gdf = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:4326")
 
     return grid_gdf
+
 
 def create_grid(cell_size_meters):
     epsg4326 = Proj(init='EPSG:4326')
@@ -520,20 +512,33 @@ def create_grid(cell_size_meters):
 @app.route('/createnewgrid')
 def create_grids():
     polygon_list = []
+    #Model add hour field aggregate to police_cinci_data_new
+    # filter out where point = [0,0]
+    # Filter out offense list
+    #iterate through result list and save to new model
+    # from the new model filter by the interval then apply the polygon_pipeline
 
+    #need to avoid adding new records to save
+    hour_aggregate_data = load_dataset2()
     for element in GRID_DISTANCES_LIST:
         distance = get_meters(element[0], element[1])
         print("distance", distance)
         grid = create_grid(distance)
         interval = element[2]
+        data = filter_dataset(interval, hour_aggregate_data)
+        filtered_data_list = [doc for doc in data]
+        print('filtered_data_list', filtered_data_list[0:5])
+        #test if data gets saved
+        for doc in filtered_data_list:
+            new_model_instance = PolygonModel(**doc)
+            new_model_instance.save()
 
         grid_geojson = grid.to_json()
         grid_geojson_parsed = json.loads(grid_geojson)
         polygon = reverse_coordinates(grid_geojson_parsed)
-        print("polygon", polygon)
+        # print("polygon", polygon)
         polygon_list.append(polygon)
-
-        count_list = get_count_of_grid_new(polygon, interval)
+        count_list = get_count_of_grid_new(polygon, interval,data)
         print("element", element)
         print("count_list", count_list)
 
