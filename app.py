@@ -26,7 +26,8 @@ app.config['MONGODB_SETTINGS'] = {
 }
 db.init_app(app)
 
-#search polygon: filter by hour before passing pipeline
+
+# search polygon: filter by hour before passing pipeline
 
 class UserData:
     latitude = None
@@ -91,6 +92,7 @@ def load_dataset():
 
     return hour_result_list
 
+
 def load_dataset2():
     hourpipeline = [
         {
@@ -106,6 +108,7 @@ def load_dataset2():
     hour_result_list = [doc for doc in hour_result]
 
     return hour_result_list
+
 
 def filter_time_interval(interval, data):
     if interval == "12AM-3AM":
@@ -290,7 +293,8 @@ def get_crimecounts_forlocation(coordinates, data, distance):
     return len(distance_near_list)
 
 
-GRID_DISTANCES_NEW_LIST = [
+# list of tuples
+GRID_DISTANCES_LIST = [
     # (700, "meters", "All"),
     # (700, "meters", "12AM-3AM")
     (700, "meters", "4AM-7AM")
@@ -298,42 +302,49 @@ GRID_DISTANCES_NEW_LIST = [
     # (700, "meters", "12PM-3PM"),
     # (700, "meters", "4PM-7PM"),
     # (700, "meters", "8PM-11PM"),
+    # (750, "meters", "All"),
     # (750, "meters", "12AM-3AM"),
     # (750, "meters", "4AM-7AM"),
     # (750, "meters", "8AM-11AM"),
     # (750, "meters", "12PM-3PM"),
     # (750, "meters", "4PM-7PM"),
     # (750, "meters", "8PM-11PM"),
+    # (800, "meters", "All"),
     # (800, "meters", "12AM-3AM"),
     # (800, "meters", "4AM-7AM"),
     # (800, "meters", "8AM-11AM"),
     # (800, "meters", "12PM-3PM"),
     # (800, "meters", "4PM-7PM"),
     # (800, "meters", "8PM-11PM"),
+    # (850, "meters", "All"),
     # (850, "meters", "12AM-3AM"),
     # (850, "meters", "4AM-7AM"),
     # (850, "meters", "8AM-11AM"),
     # (850, "meters", "12PM-3PM"),
     # (850, "meters", "4PM-7PM"),
     # (850, "meters", "8PM-11PM"),
+    # (900, "meters", "All"),
     # (900, "meters", "12AM-3AM"),
     # (900, "meters", "4AM-7AM"),
     # (900, "meters", "8AM-11AM"),
     # (900, "meters", "12PM-3PM"),
     # (900, "meters", "4PM-7PM"),
     # (900, "meters", "8PM-11PM"),
+    # (950, "meters", "All"),
     # (950, "meters", "12AM-3AM"),
     # (950, "meters", "4AM-7AM"),
     # (950, "meters", "8AM-11AM"),
     # (950, "meters", "12PM-3PM"),
     # (950, "meters", "4PM-7PM"),
     # (950, "meters", "8PM-11PM"),
+    # (1, "kilometer", "All"),
     # (1, "kilometer", "12AM-3AM"),
     # (1, "kilometer", "4AM-7AM"),
     # (1, "kilometer", "8AM-11AM"),
     # (1, "kilometer", "12PM-3PM"),
     # (1, "kilometer", "4PM-7PM"),
     # (1, "kilometer", "8PM-11PM"),
+    # (1, "mile", "All"),
     # (1, "mile", "12AM-3AM"),
     # (1, "mile", "4AM-7AM"),
     # (1, "mile", "8AM-11AM"),
@@ -342,22 +353,17 @@ GRID_DISTANCES_NEW_LIST = [
     # (1, "mile", "8PM-11PM")
 ]
 
-GRID_DISTANCES_LIST = [
-    (700, "meters", "4AM-7AM")
-]
-
 
 def get_count_of_grid_new(polygon_dict, interval, data):
     start_time = time.time()
     sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
     count_list = [search_within_polygon(sublist, interval, data) for sublist in sublists]
-    # print("count_list", count_list)
+    print("count_list", count_list)
     print("--- %s secconds ---" % (time.time() - start_time))
     return count_list
 
 
 def search_within_polygon(sublistelement, interval, data):
-
     # start_time = time.time()
     polygon_pipeline = [
         {
@@ -378,10 +384,9 @@ def search_within_polygon(sublistelement, interval, data):
 
     result = PolygonModel.objects.aggregate(*polygon_pipeline)
     polygon_result_list = [doc for doc in result]
-
-    # if len(polygon_result_list) != 0:
-        # print("new_data_list", polygon_result_list[0])
-        # print("polygon_result_list", len(polygon_result_list))
+    if len(polygon_result_list) != 0:
+        print("new_data_list", polygon_result_list[0])
+        print("polygon_result_list", len(polygon_result_list))
     return len(polygon_result_list)
 
 
@@ -411,43 +416,49 @@ def reverse_coordinates(geojson):
 
 
 def create_grid2(cell_size_meters):
-    bbox = [-84.8192049318631, 39.0533271607855, -84.2545822217415, 39.3599982625544]
+    min_lon, min_lat = -84.8192049318631, 39.0533271607855
+    max_lon, max_lat = -84.2545822217415, 39.3599982625544
 
-    minx = bbox[1]
-    maxx = bbox[3]
-    miny = bbox[0]
-    maxy = bbox[2]
+    transformer4326 = Transformer.from_crs("EPSG:4326", "EPSG:3857")
+    transformer3857 = Transformer.from_crs("EPSG:3857", "EPSG:4326")
 
-    transformer_4326_to_3857 = Transformer.from_crs("epsg:4326", "epsg:3857", always_xy=True)
-    transformer_3857_to_4326 = Transformer.from_crs("epsg:3857", "epsg:4326", always_xy=True)
+    min_x, min_y = transformer4326.transform(min_lon, min_lat)
+    max_x, max_y = transformer4326.transform(max_lon, max_lat)
 
-    # Convert the bounding box to Web Mercator (EPSG:3857) to get a more accurate estimate of meters per degree
-    minx, miny = transformer_4326_to_3857.transform(minx, miny)
-    maxx, maxy = transformer_4326_to_3857.transform(maxx, maxy)
+    bbox_3857 = (min_x, min_y, max_x, max_y)
 
-    # Calculate the number of cells in each dimension
-    num_cells_x = int((maxx - minx) / cell_size_meters)
-    num_cells_y = int((maxy - miny) / cell_size_meters)
+    # Calculate the size of each grid cell in EPSG:3857
+    width_3857 = bbox_3857[2] - bbox_3857[0]
+    height_3857 = bbox_3857[3] - bbox_3857[1]
 
-    # Create a grid of rectangular cells
-    grid_cells = []
-    for i in range(num_cells_x):
-        for j in range(num_cells_y):
-            cell_minx = minx + i * cell_size_meters
-            cell_miny = miny + j * cell_size_meters
-            cell_maxx = minx + (i + 1) * cell_size_meters
-            cell_maxy = miny + (j + 1) * cell_size_meters
+    # Calculate the number of rows and columns
+    num_rows = int(height_3857 / cell_size_meters)
+    num_cols = int(width_3857 / cell_size_meters)
 
-            # Convert the cell bounding box back to WGS 84
-            cell_minx, cell_miny = transformer_3857_to_4326.transform(cell_minx, cell_miny)
-            cell_maxx, cell_maxy = transformer_3857_to_4326.transform(cell_maxx, cell_maxy)
+    cell_width_3857 = width_3857 / num_cols
+    cell_height_3857 = height_3857 / num_rows
 
-            grid_cells.append(box(cell_minx, cell_miny, cell_maxx, cell_maxy))
+    # Create a grid of squares
+    grid = []
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # Calculate the coordinates of the current grid cell in EPSG:3857
+            x_min = bbox_3857[0] + j * cell_width_3857
+            y_min = bbox_3857[1] + i * cell_height_3857
+            x_max = x_min + cell_width_3857
+            y_max = y_min + cell_height_3857
 
-    print("new grid_cells", grid_cells[0])
+            x_min_4326, y_min_4326 = transformer3857.transform(x_min, y_min)
+            x_max_4326, y_max_4326 = transformer3857.transform(x_max, y_max)
+
+            # Create a Shapely geometry box for the current grid cell in EPSG:4326
+            cell_4326 = box(x_min_4326, y_min_4326, x_max_4326, y_max_4326)
+
+            # Append the geometry box to the grid
+            grid.append(cell_4326)
 
     # Create a GeoDataFrame from the grid cells
-    grid_gdf = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:4326")
+    grid_gdf = gpd.GeoDataFrame(geometry=grid, crs="EPSG:4326")
 
     return grid_gdf
 
@@ -509,38 +520,40 @@ def create_grid(cell_size_meters):
 
     return grid_gdf
 
+
+# Model add hour field aggregate to police_cinci_data_new
+# filter out where point = [0,0]
+# Filter out offense list
+# iterate through result list and save to new model
+# from the new model filter by the interval then apply the polygon_pipeline
 @app.route('/createnewgrid')
 def create_grids():
     polygon_list = []
-    #Model add hour field aggregate to police_cinci_data_new
-    # filter out where point = [0,0]
-    # Filter out offense list
-    #iterate through result list and save to new model
-    # from the new model filter by the interval then apply the polygon_pipeline
 
-    #need to avoid adding new records to save
+    element = (700, "meters", "4AM-7AM")
+
+    # need to avoid adding new records to save
     hour_aggregate_data = load_dataset2()
-    for element in GRID_DISTANCES_LIST:
-        distance = get_meters(element[0], element[1])
-        print("distance", distance)
-        grid = create_grid(distance)
-        interval = element[2]
-        data = filter_dataset(interval, hour_aggregate_data)
-        filtered_data_list = [doc for doc in data]
-        print('filtered_data_list', filtered_data_list[0:5])
-        #test if data gets saved
-        for doc in filtered_data_list:
-            new_model_instance = PolygonModel(**doc)
-            new_model_instance.save()
+    # for element in GRID_DISTANCES_LIST:
+    distance = get_meters(element[0], element[1])
+    print("distance", distance)
+    grid = create_grid(distance)
+    interval = element[2]
+    data = filter_dataset(interval, hour_aggregate_data)
+    filtered_data_list = [doc for doc in data]
+    # print('filtered_data_list', filtered_data_list[0:5])
+    for doc in filtered_data_list:
+        new_model_instance = PolygonModel(**doc)
+        new_model_instance.save()
 
-        grid_geojson = grid.to_json()
-        grid_geojson_parsed = json.loads(grid_geojson)
-        polygon = reverse_coordinates(grid_geojson_parsed)
-        # print("polygon", polygon)
-        polygon_list.append(polygon)
-        count_list = get_count_of_grid_new(polygon, interval,data)
-        print("element", element)
-        print("count_list", count_list)
+    grid_geojson = grid.to_json()
+    grid_geojson_parsed = json.loads(grid_geojson)
+    polygon = reverse_coordinates(grid_geojson_parsed)
+    print("polygon", polygon)
+    polygon_list.append(polygon)
+    count_list = get_count_of_grid_new(polygon, interval, data)
+    print("element", element)
+    print("count_list", count_list)
 
     return jsonify(polygon_list)
 
@@ -555,7 +568,8 @@ def test_grids():
 
     return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
 
-#create endpoint to delete all documents in PolygonModel. Run each time after createnewgrids endpoint
+
+# create endpoint to delete all documents in PolygonModel. Run each time after createnewgrids endpoint
 @app.route('/deletenewgrid')
 def delete_grid():
     try:
@@ -564,6 +578,7 @@ def delete_grid():
         return jsonify({"status": "success", "deleted_count": deleted_count}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
 def success(safe, work, current, destination, interval, gridsize):
