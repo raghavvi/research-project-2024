@@ -520,6 +520,116 @@ def create_grid(cell_size_meters):
 
     return grid_gdf
 
+def create_grid_heatmap_new(distance, point):
+
+    print("latitude", point[0])
+    print("longitude", point[1])
+    # Transform the bounding box to EPSG:3857
+    # from point compute bounding box using distance
+
+    transformer_to_3857 = Transformer.from_crs("EPSG:4326", "EPSG:3857")
+    transformer_to_4326 = Transformer.from_crs("EPSG:3857", "EPSG:4326")
+
+    # Transform the point to EPSG:3857
+    transformed_point_coordinates = transformer_to_3857.transform(point[0], point[1])
+
+    grid_size = 5
+    half_grid_size = grid_size // 2
+
+    # Create a grid of squares
+    grid = []
+    for i in range(-half_grid_size, half_grid_size + 1):
+        for j in range(-half_grid_size, half_grid_size + 1):
+            min_x = transformed_point_coordinates[1] + (i * distance)
+            min_y = transformed_point_coordinates[0] + (j * distance)
+            max_x = min_x + distance
+            max_y = min_y + distance
+            # Transform the EPSG:3857 coordinates back to EPSG:4326
+            #x_min_4326, y_min_4326 = transformer_to_4326.transform(min_y, min_x)
+            #x_max_4326, y_max_4326 = transformer_to_4326.transform(max_y, max_x)
+
+            # Transform the EPSG:3857 coordinates back to EPSG:4326
+            min_lon, min_lat = transformer_to_4326.transform(min_y, min_x)
+            max_lon, max_lat = transformer_to_4326.transform(max_y, max_x)
+
+            # Create a Shapely geometry box for the current grid cell in EPSG:4326
+            #cell_4326 = box(x_min_4326, y_min_4326, x_max_4326, y_max_4326)
+            cell_4326 = box(min_lat, min_lon, max_lat, max_lon)
+            #cell_4326 = box(min_lon, min_lat, max_lon, max_lat)
+            # Append the geometry box to the grid
+            grid.append(cell_4326)
+
+    # Create a GeoDataFrame from the grid cells
+    grid_gdf = gpd.GeoDataFrame(geometry=grid, crs="EPSG:4326")
+
+    return grid_gdf
+
+# transform distance from EPSG:3857 back to EPSG:4326
+# select 20x20 grid from point
+def create_grid_heatmap(distance, point):
+    epsg4326 = Proj(init='EPSG:4326')
+    epsg3857 = Proj(init='EPSG:3857')
+
+    print("latitude", point[1][0])
+    print("longitude", point[1][1])
+    # Transform the bounding box to EPSG:3857
+    # from point compute bounding box using distance
+    transformed_point_coordinates = transform(epsg4326, epsg3857, point[1][0], point[1][1])
+
+    grid_size = 5
+    half_grid_size = grid_size // 2
+
+    # Create a grid of squares
+    grid = []
+    for i in range(-half_grid_size, half_grid_size + 1):
+        for j in range(-half_grid_size, half_grid_size + 1):
+            min_x = transformed_point_coordinates[0] + (i * distance)
+            min_y = transformed_point_coordinates[1] + (j * distance)
+            max_x = min_x + distance
+            max_y = min_y + distance
+
+            # Transform the EPSG:3857 coordinates back to EPSG:4326
+            transformer_to_4326 = Transformer.from_proj(epsg3857, epsg4326)
+            x_min_4326, y_min_4326 = transformer_to_4326.transform(min_y, min_x)
+            x_max_4326, y_max_4326 = transformer_to_4326.transform(max_y, max_x)
+
+            # Create a Shapely geometry box for the current grid cell in EPSG:4326
+            cell_4326 = box(x_min_4326, y_min_4326, x_max_4326, y_max_4326)
+
+            # Append the geometry box to the grid
+            grid.append(cell_4326)
+
+    # Create a GeoDataFrame from the grid cells
+    grid_gdf = gpd.GeoDataFrame(geometry=grid, crs="EPSG:4326")
+
+    return grid_gdf
+
+
+def create_heatmap(distance, point, interval, data):
+    print("test create_heatmap")
+    polygon_list = []
+    grid = create_grid_heatmap(distance, point)
+    grid_geojson = grid.to_json()
+    grid_geojson_parsed = json.loads(grid_geojson)
+    polygon = reverse_coordinates(grid_geojson_parsed)
+    print("polygon", polygon)
+    polygon_list.append(polygon)
+    count_list = get_count_of_grid_new(polygon, interval, data)
+    print("count_list", count_list)
+
+    return count_list
+
+
+# create endpoint to delete all documents in PolygonModel. Run each time after createnewgrids endpoint
+@app.route('/deletenewgrid')
+def delete_grid():
+    try:
+        # Delete all documents from the PolygonModel collection
+        deleted_count = PolygonModel.objects().delete()
+        return jsonify({"status": "success", "deleted_count": deleted_count}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 # Model add hour field aggregate to police_cinci_data_new
 # filter out where point = [0,0]
@@ -564,21 +674,20 @@ def test_grids():
     grid = create_grid(distance)
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
+    print("grid_geojson_parsed",grid_geojson_parsed)
     polygon = reverse_coordinates(grid_geojson_parsed)
 
     return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
 
+@app.route('/testheatmapgrid')
+def test_heatmap_grid():
+    point = (39.1318613, -84.51576195582436)
+    distance = get_meters(700, "meters")
+    grid = create_grid_heatmap_new(distance, point)
+    grid_geojson = grid.to_json()
+    grid_geojson_parsed = json.loads(grid_geojson)
 
-# create endpoint to delete all documents in PolygonModel. Run each time after createnewgrids endpoint
-@app.route('/deletenewgrid')
-def delete_grid():
-    try:
-        # Delete all documents from the PolygonModel collection
-        deleted_count = PolygonModel.objects().delete()
-        return jsonify({"status": "success", "deleted_count": deleted_count}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
+    return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
 
 @app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
 def success(safe, work, current, destination, interval, gridsize):
@@ -588,8 +697,6 @@ def success(safe, work, current, destination, interval, gridsize):
         worklocation = geolocator.geocode(work)
         currentlocation = geolocator.geocode(current)
         destinationlocation = geolocator.geocode(destination)
-        print("destinationlocation", destinationlocation)
-        # Need to add destination to user class and add count function
         user = UserData()
         user.add_safe_coordinates(safelocation.latitude, safelocation.longitude)
         print(user.safecoordinates)
@@ -606,8 +713,6 @@ def success(safe, work, current, destination, interval, gridsize):
         gridsplit = gridsize.split()
         radius = gridsplit[0]
         unit = gridsplit[1]
-        # print("radius",radius)
-        # print("unit",unit)
 
         user.interval = interval
         user.radius = radius
@@ -617,6 +722,7 @@ def success(safe, work, current, destination, interval, gridsize):
         aggregate_data = load_dataset()
         data = filter_dataset(user.interval, aggregate_data)
         filtered_data_list = [doc for doc in data]
+        # print("Check if data is filtered",filtered_data_list[0:2])
 
         meters = get_meters(user.radius, user.units)
 
@@ -627,8 +733,10 @@ def success(safe, work, current, destination, interval, gridsize):
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination",
               countdestination)
 
-        # compared_grid_counts(user.grid, countsafe, countwork, countcurrent)
-        compute_probabilities(user.grid, countsafe, countwork, countcurrent)
+        create_heatmap(meters, safelocation, user.interval, data)
+        create_heatmap(meters, worklocation, user.interval, data)
+        create_heatmap(meters, currentlocation, user.interval, data)
+        create_heatmap(meters, destinationlocation, user.interval, data)
 
         return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
                                current=countcurrent, destination=countdestination)

@@ -3,6 +3,7 @@ from flask_mongoengine import MongoEngine
 db = MongoEngine()
 
 
+# data should be filtered by frontend user. Need to validate
 class Model(db.Document):
     id = db.ObjectIdField()
     INCIDENT_NO = db.IntField()
@@ -75,6 +76,7 @@ class Model(db.Document):
         }
 
 
+# Used to filter Model based on interval and distance than on deletegrid endpoint data will be deleted for grid calculation
 class PolygonModel(db.DynamicDocument):
     _id = db.ObjectIdField()
     INCIDENT_NO = db.IntField()
