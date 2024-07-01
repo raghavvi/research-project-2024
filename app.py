@@ -1,20 +1,17 @@
+import json
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
-
 from shapely.geometry import box
 from pyproj import Transformer, Proj, transform
 from geopy.exc import GeocoderTimedOut
 import geopandas as gpd
-import json
 from key import key
 from geopy.geocoders import Nominatim
 from dotenv import load_dotenv
 import os
-from models import db, PolygonModel
+from models import db, PolygonModel, IntervalOne, IntervalTwo, IntervalThree, IntervalFour, IntervalFive, IntervalSix
 from models import Model
 from griddata import gridcounts
-import numpy as np
-import geopy.distance
 
 load_dotenv()
 
@@ -26,8 +23,6 @@ app.config['MONGODB_SETTINGS'] = {
 }
 db.init_app(app)
 
-
-# search polygon: filter by hour before passing pipeline
 
 class UserData:
     latitude = None
@@ -117,7 +112,6 @@ def filter_time_interval(interval, data):
     elif interval == '4AM-7AM':
         newlist = [result for result in data if result.get('hour') == '04' or result.get('hour') == '05'
                    or result.get('hour') == '06' or result.get('hour') == '07']
-        print("getting new list", newlist)
     elif interval == "8AM-11AM":
         newlist = [result for result in data if result.get('hour') == '08' or result.get('hour') == '09'
                    or result.get('hour') == '10' or result.get('hour') == '11']
@@ -172,58 +166,6 @@ def switch_grids(grid):
         return gridcounts["1kilometer"]
     elif grid == "1 mile":
         return gridcounts["1mile"]
-
-
-@app.route('/data/<grid>/<safe>/<work>/<current>')
-def compared_grid_counts(grid, safe, work, current):
-    safe = int(safe)
-    work = int(work)
-    current = int(current)
-
-    data = {}
-    gridselected = switch_grids(grid)
-    data['grid'] = gridselected
-    data['safecount'] = safe
-    data['workcount'] = work
-    data['currentcount'] = current
-
-    return jsonify(data)
-
-
-@app.route('/data/<grid>/<safe>/<work>/<current>')
-def compute_probabilities(grid, safe, work, current):
-    safe = int(safe)
-    work = int(work)
-    current = int(current)
-
-    data = {}
-
-    griddistance = switch_grids(grid)
-
-    # data = gridcounts["700meters:12AM-3AM"]
-
-    gridcounts = sum(griddistance)
-    gridcountarray = np.array(griddistance)
-    # Test Exclude zeros from the data
-    # nonzero_data = onemilecountarray[onemilecountarray != 0]
-
-    gridcount_mean = np.mean(griddistance)
-    max_gridcount = np.max(gridcountarray)
-    min_grid_probability = 0
-    safe_probability = safe / gridcounts
-    work_probability = work / gridcounts
-    current_probability = current / gridcounts
-    max_grid_probability = max_gridcount / gridcounts
-
-    # 0, mean, radius probability counts
-    data["mingrid_probability"] = min_grid_probability
-    data["safe_probability"] = safe_probability
-    data["work_probability"] = work_probability
-    data["current_probability"] = current_probability
-    data["gridcount_mean"] = gridcount_mean
-    data["max_grid_probability"] = max_grid_probability
-
-    return jsonify(data)
 
 
 def coord_lister(geom):
@@ -354,6 +296,101 @@ GRID_DISTANCES_LIST = [
 ]
 
 
+def create_dataframe(rowlist, collist, countlist, centerlist):
+    print("create_dataframe")
+    data = {'rows': rowlist, 'cols': collist, 'countlist': countlist, 'centerlist': centerlist}
+    return data
+
+
+def get_middle_element_of_count_list(count_list):
+    # if even
+    if len(count_list) % 2 == 0:
+        return (len(count_list) // 2) - 1
+    else:
+        return (len(count_list) - 1) // 2
+        # assign true to middle element in list else false
+
+
+def get_count_of_grid_heatmap(polygon_dict, interval):
+    start_time = time.time()
+    sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
+    count_list = [search_within_polygon_heatmap(sublist, interval) for sublist in sublists]
+    print("count_list", count_list)
+    print("--- %s secconds ---" % (time.time() - start_time))
+    return count_list
+
+
+def search_within_polygon_heatmap(sublistelement, interval):
+    # start_time = time.time()
+    polygon_pipeline = [
+        {
+            "$match": {
+                "point": {
+                    "$geoWithin": {
+                        "$geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                sublistelement
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+
+    if interval == "12AM-3AM":
+        result = IntervalOne.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+    elif interval == "4AM-7AM":
+        result = IntervalTwo.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+    elif interval == "8AM-11AM":
+        result = IntervalThree.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+    elif interval == "12PM-3PM":
+        result = IntervalFour.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+    elif interval == "4PM-7PM":
+        result = IntervalFive.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+    elif interval == "8PM-11PM":
+        result = IntervalSix.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+    else:
+        # All intervals
+        result = Model.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("new_data_list", polygon_result_list[0])
+            print("polygon_result_list", len(polygon_result_list))
+        return len(polygon_result_list)
+
+
 def get_count_of_grid_new(polygon_dict, interval, data):
     start_time = time.time()
     sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
@@ -388,13 +425,6 @@ def search_within_polygon(sublistelement, interval, data):
         print("new_data_list", polygon_result_list[0])
         print("polygon_result_list", len(polygon_result_list))
     return len(polygon_result_list)
-
-
-def select_interval_type(model, filtered_model, interval):
-    if interval != "All":
-        return filtered_model
-    else:
-        return model.objects().all()
 
 
 def reverse_coordinates(geojson):
@@ -559,28 +589,94 @@ def create_grid_heatmap_new(distance, latitude, longitude):
     return grid_gdf
 
 
-def create_heatmap(distance, point, interval, data):
+def create_heatmap_polygon(distance, point):
     print("test create_heatmap")
-    polygon_list = []
     grid = create_grid_heatmap_new(distance, point[1][0], point[1][1])
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
     polygon = reverse_coordinates(grid_geojson_parsed)
-    print("polygon", polygon)
-    polygon_list.append(polygon)
-    count_list = get_count_of_grid_new(polygon, interval, data)
-    print("count_list", count_list)
-
-    return count_list
+    return polygon
 
 
-# create endpoint to delete all documents in PolygonModel. Run each time after createnewgrids endpoint
 @app.route('/deletenewgrid')
 def delete_grid():
     try:
         # Delete all documents from the PolygonModel collection
         deleted_count = PolygonModel.objects().delete()
         return jsonify({"status": "success", "deleted_count": deleted_count}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/deletefilteredmodels')
+def delete_filtered_models():
+    try:
+        if IntervalOne.objects().first():
+            deleted_count1 = IntervalOne.objects().delete()
+        if IntervalTwo.objects().first():
+            deleted_count2 = IntervalTwo.objects().delete()
+        if IntervalThree.objects().first():
+            deleted_count3 = IntervalThree.objects().delete()
+        if IntervalFour.objects().first():
+            deleted_count4 = IntervalFour.objects().delete()
+        if IntervalFive.objects().first():
+            deleted_count5 = IntervalFive.objects().delete()
+        if IntervalSix.objects().first():
+            deleted_count6 = IntervalSix.objects().delete()
+        return jsonify({"status": "success", "deleted_count": deleted_count1,
+                        "status": "success", "deleted_count": deleted_count2,
+                        "status": "success", "deleted_count": deleted_count3,
+                        "status": "success", "deleted_count": deleted_count4,
+                        "status": "success", "deleted_count": deleted_count5,
+                        "status": "success", "deleted_count": deleted_count6,
+                        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/createfilteredmodels')
+def create_filtered_models():
+    try:
+        interval_list = ["12AM-3AM",
+                         "4AM-7AM",
+                         "8AM-11AM",
+                         "12PM-3PM",
+                         "4PM-7PM",
+                         "8PM-11PM"]
+
+        hour_aggregate_data = load_dataset2()
+        for interval in interval_list:
+            data = filter_dataset(interval, hour_aggregate_data)
+            filtered_data_list = [doc for doc in data]
+            if interval == "12AM-3AM":
+                for doc in filtered_data_list:
+                    new_model_instance = IntervalOne(**doc)
+                    new_model_instance.save()
+            elif interval == "4AM-7AM":
+                for doc in filtered_data_list:
+                    new_model_instance = IntervalTwo(**doc)
+                    new_model_instance.save()
+            elif interval == "8AM-11AM":
+                for doc in filtered_data_list:
+                    new_model_instance = IntervalThree(**doc)
+                    new_model_instance.save()
+            elif interval == "12PM-3PM":
+                for doc in filtered_data_list:
+                    new_model_instance = IntervalFour(**doc)
+                    new_model_instance.save()
+            elif interval == "4PM-7PM":
+                for doc in filtered_data_list:
+                    new_model_instance = IntervalFive(**doc)
+                    new_model_instance.save()
+            elif interval == "8PM-11PM":
+                for doc in filtered_data_list:
+                    new_model_instance = IntervalSix(**doc)
+                    new_model_instance.save()
+
+        return jsonify(
+            {"status": "success", "one_count": IntervalOne.countDocuments(), "two_count": IntervalTwo.countDocuments(),
+             "three_count": IntervalThree.countDocuments(), "four_count": IntervalFour.countDocuments(),
+             "five_count": IntervalFive.countDocuments(), "six_count": IntervalSix.countDocuments()}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -605,7 +701,6 @@ def create_grids():
     interval = element[2]
     data = filter_dataset(interval, hour_aggregate_data)
     filtered_data_list = [doc for doc in data]
-    # print('filtered_data_list', filtered_data_list[0:5])
     for doc in filtered_data_list:
         new_model_instance = PolygonModel(**doc)
         new_model_instance.save()
@@ -629,7 +724,6 @@ def test_grids():
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
     print("grid_geojson_parsed", grid_geojson_parsed)
-    polygon = reverse_coordinates(grid_geojson_parsed)
 
     return render_template('gridmap.html', polygon=grid_geojson_parsed, key=key)
 
@@ -638,7 +732,7 @@ def test_grids():
 def test_heatmap_grid():
     point = (39.1318613, -84.51576195582436)
     distance = get_meters(700, "meters")
-    grid = create_grid_heatmap_new(distance, point[0],point[1])
+    grid = create_grid_heatmap_new(distance, point[0], point[1])
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
 
@@ -678,7 +772,6 @@ def success(safe, work, current, destination, interval, gridsize):
         aggregate_data = load_dataset()
         data = filter_dataset(user.interval, aggregate_data)
         filtered_data_list = [doc for doc in data]
-        # print("Check if data is filtered",filtered_data_list[0:2])
 
         meters = get_meters(user.radius, user.units)
 
@@ -689,10 +782,51 @@ def success(safe, work, current, destination, interval, gridsize):
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination",
               countdestination)
 
-        create_heatmap(meters, safelocation, user.interval, data)
-        create_heatmap(meters, worklocation, user.interval, data)
-        create_heatmap(meters, currentlocation, user.interval, data)
-        create_heatmap(meters, destinationlocation, user.interval, data)
+        safepolygon = create_heatmap_polygon(meters, safelocation)
+        workpolygon = create_heatmap_polygon(meters, worklocation)
+        currentpolygon = create_heatmap_polygon(meters, currentlocation)
+        destinationpolygon = create_heatmap_polygon(meters, destinationlocation)
+
+        safe_count_list = get_count_of_grid_heatmap(safepolygon, user.interval)
+        work_count_list = get_count_of_grid_heatmap(workpolygon, user.interval)
+        current_count_list = get_count_of_grid_heatmap(currentpolygon, user.interval)
+        destination_count_list = get_count_of_grid_heatmap(destinationpolygon, user.interval)
+
+        middle_index = get_middle_element_of_count_list(safe_count_list)
+        conditional_safe_center_point_list = [True if index == middle_index else
+                                              False for index, num in enumerate(safe_count_list)]
+
+        middle_index = get_middle_element_of_count_list(work_count_list)
+        conditional_work_center_point_list = [True if index == middle_index else
+                                              False for index, num in enumerate(work_count_list)]
+
+        middle_index = get_middle_element_of_count_list(current_count_list)
+        conditional_current_center_point_list = [True if index == middle_index else
+                                                 False for index, num in enumerate(current_count_list)]
+
+        middle_index = get_middle_element_of_count_list(destination_count_list)
+        conditional_destination_center_point_list = [True if index == middle_index else
+                                                     False for index, num in enumerate(destination_count_list)]
+
+        print("conditional_safe_center_point_list", conditional_safe_center_point_list)
+
+        rows_list = ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "C", "C", "C", "C", "C", "D", "D", "D", "D", "D",
+                     "E", "E", "E", "E", "E"]
+        col_list = ["C1", "C2", "C3", "C4", "C5", "C1", "C2", "C3", "C4", "C5", "C1", "C2", "C3", "C4", "C5",
+                    "C1", "C2", "C3", "C4", "C5", "C1", "C2", "C3", "C4", "C5"]
+
+        safe_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_safe_center_point_list)
+        print("safe_dataframe", safe_dataframe)
+
+        work_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_work_center_point_list)
+        print("work_dataframe", work_dataframe)
+
+        current_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_current_center_point_list)
+        print("current_dataframe", current_dataframe)
+
+        destination_dataframe = create_dataframe(rows_list, col_list, safe_count_list,
+                                                 conditional_destination_center_point_list)
+        print("destination_dataframe", destination_dataframe)
 
         return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
                                current=countcurrent, destination=countdestination)
@@ -708,8 +842,6 @@ def home():
         current = request.form.get("current")
         destination = request.form.get("destination")
         interval = request.form.get("interval")
-        # radius = request.form.get("radius")
-        # unit = request.form.get("unit")
         gridsize = request.form.get("gridsize")
 
         return redirect(url_for('success', safe=safe, work=work, current=current, destination=destination,
