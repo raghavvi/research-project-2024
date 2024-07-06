@@ -12,6 +12,7 @@ import os
 from models import db, PolygonModel, IntervalOne, IntervalTwo, IntervalThree, IntervalFour, IntervalFive, IntervalSix
 from models import Model
 from griddata import gridcounts
+import pandas as pd
 
 load_dotenv()
 
@@ -22,6 +23,9 @@ app.config['MONGODB_SETTINGS'] = {
     'host': os.getenv('MONGODB_URI'),
 }
 db.init_app(app)
+
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+# os.makedirs(DATA_FOLDER_DIR, exist_ok=True)
 
 
 class UserData:
@@ -598,6 +602,66 @@ def create_heatmap_polygon(distance, point):
     return polygon
 
 
+def delete_heatmap_files():
+    data_folder = "data"
+
+    heatmap_files = [
+        "heatmap_data_safe.csv",
+        "heatmap_data_work.csv",
+        "heatmap_data_current.csv",
+        "heatmap_data_destination.csv"
+    ]
+
+    deleted_files = []
+    errors = []
+
+    for file in heatmap_files:
+        file_path = os.path.join(PROJECT_DIR, data_folder, file)
+        print("file_path", file_path)
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                deleted_files.append(file)
+            else:
+                errors.append(f"{file} does not exist")
+        except Exception as e:
+            errors.append(f"Error deleting {file}: {str(e)}")
+
+
+@app.route('/deleteheatmapfile')
+def delete_heatmap_file_endpoint():
+    # os join base folder with data folder
+    # iterate through files in folder and delete
+
+    data_folder = "data"
+
+    heatmap_files = [
+        "heatmap_data_safe.csv",
+        "heatmap_data_work.csv",
+        "heatmap_data_current.csv",
+        "heatmap_data_destination.csv"
+    ]
+
+    deleted_files = []
+    errors = []
+
+    for file in heatmap_files:
+        file_path = os.path.join(PROJECT_DIR, data_folder, file)
+        print("file_path", file_path)
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                deleted_files.append(file)
+            else:
+                errors.append(f"{file} does not exist")
+        except Exception as e:
+            errors.append(f"Error deleting {file}: {str(e)}")
+
+    return jsonify({
+        'deleted_files': deleted_files,
+        'errors': errors
+    }), 200
+
 @app.route('/deletenewgrid')
 def delete_grid():
     try:
@@ -742,6 +806,7 @@ def test_heatmap_grid():
 @app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
 def success(safe, work, current, destination, interval, gridsize):
     geolocator = Nominatim(user_agent="project-flask")
+    delete_heatmap_files()
     try:
         safelocation = geolocator.geocode(safe)
         worklocation = geolocator.geocode(work)
@@ -821,12 +886,24 @@ def success(safe, work, current, destination, interval, gridsize):
         work_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_work_center_point_list)
         print("work_dataframe", work_dataframe)
 
-        current_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_current_center_point_list)
+        current_dataframe = create_dataframe(rows_list, col_list, safe_count_list,
+                                             conditional_current_center_point_list)
         print("current_dataframe", current_dataframe)
 
         destination_dataframe = create_dataframe(rows_list, col_list, safe_count_list,
                                                  conditional_destination_center_point_list)
         print("destination_dataframe", destination_dataframe)
+
+        df_safe = pd.DataFrame(safe_dataframe)
+        df_work = pd.DataFrame(work_dataframe)
+        df_current = pd.DataFrame(current_dataframe)
+        df_destination = pd.DataFrame(destination_dataframe)
+
+        # Convert created DataFrame to CSV
+        df_safe.to_csv('data/heatmap_data_safe.csv', index=False)
+        df_work.to_csv('data/heatmap_data_work.csv', index=False)
+        df_current.to_csv('data/heatmap_data_current.csv', index=False)
+        df_destination.to_csv('data/heatmap_data_destination.csv', index=False)
 
         return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
                                current=countcurrent, destination=countdestination)
