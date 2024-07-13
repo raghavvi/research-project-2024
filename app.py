@@ -109,6 +109,19 @@ def load_dataset2():
     return hour_result_list
 
 
+def filter_by_cpd_neighborhood(data):
+    print("filter by cpd_neighborhood")
+    # data is filtered by filter time interval
+    cpd_neighborhood_list = [neighborhood['CPD_NEIGHBORHOOD'] for neighborhood in data]
+    unique_cpd_set = set(cpd_neighborhood_list)
+    data_dict = {}
+    for index, element in enumerate(unique_cpd_set):
+        newlist = [result for result in data if result.get('CPD_NEIGHBORHOOD') == element]
+        # append lists to tuple
+        data_dict[index] = newlist
+    print("data_dict", data_dict)
+    return data_dict
+
 def filter_time_interval(interval, data):
     if interval == "12AM-3AM":
         newlist = [result for result in data if result.get('hour') == '00' or result.get('hour') == '01'
@@ -763,6 +776,7 @@ def create_grids():
     print("distance", distance)
     grid = create_grid(distance)
     interval = element[2]
+
     data = filter_dataset(interval, hour_aggregate_data)
     filtered_data_list = [doc for doc in data]
     for doc in filtered_data_list:
@@ -772,11 +786,31 @@ def create_grids():
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
     polygon = reverse_coordinates(grid_geojson_parsed)
-    print("polygon", polygon)
+    # print("polygon", polygon)
     polygon_list.append(polygon)
-    count_list = get_count_of_grid_new(polygon, interval, data)
-    print("element", element)
-    print("count_list", count_list)
+    #divide the filtered dataset by sna neighborhoods
+    count_new_list = []
+    sna_neighborhood_name = []
+    
+    cpd_neighborhoods = filter_by_cpd_neighborhood(data)
+    for value in cpd_neighborhoods.values():
+        for v in value:
+            # v = neighborhood object
+            # get first v sna_neighborhood value
+            name = v['CPD_NEIGHBORHOOD']
+            # add name to a list of distinct elements
+            sna_neighborhood_name.append(name)
+            # neighborhood + time interval
+            count_new = get_count_of_grid_new(polygon, interval, v)
+            count_new_list.append(count_new)
+
+    set_cpd_neighborhoods = set(cpd_neighborhoods)
+    print("length of set_cpd_neighborhoods", len(set_cpd_neighborhoods))
+    print("count_new_list", count_new_list)
+    print("length of count_new_list", len(count_new_list))
+    # count_list = get_count_of_grid_new(polygon, interval, data)
+    # print("element", element)
+    # print("count_list", count_list)
 
     return jsonify(polygon_list)
 
