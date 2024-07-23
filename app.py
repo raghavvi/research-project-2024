@@ -9,7 +9,8 @@ from key import key
 from geopy.geocoders import Nominatim
 from dotenv import load_dotenv
 import os
-from models import db, PolygonModel, IntervalOne, IntervalTwo, IntervalThree, IntervalFour, IntervalFive, IntervalSix
+from models import db, CustomJSONEncoder, IntervalOne, IntervalTwo, \
+    IntervalThree, IntervalFour, IntervalFive, IntervalSix
 from models import Model
 from griddata import gridcounts
 import pandas as pd
@@ -17,6 +18,7 @@ import pandas as pd
 load_dotenv()
 
 app = Flask(__name__)
+app.json_encoder = CustomJSONEncoder
 
 app.config['MONGODB_SETTINGS'] = {
     'db': 'sample_geospatial',
@@ -25,7 +27,6 @@ app.config['MONGODB_SETTINGS'] = {
 db.init_app(app)
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-# os.makedirs(DATA_FOLDER_DIR, exist_ok=True)
 
 
 class UserData:
@@ -109,19 +110,6 @@ def load_dataset2():
     return hour_result_list
 
 
-def filter_by_cpd_neighborhood(data):
-    print("filter by cpd_neighborhood")
-    # data is filtered by filter time interval
-    cpd_neighborhood_list = [neighborhood['CPD_NEIGHBORHOOD'] for neighborhood in data]
-    unique_cpd_set = set(cpd_neighborhood_list)
-    data_dict = {}
-    for index, element in enumerate(unique_cpd_set):
-        newlist = [result for result in data if result.get('CPD_NEIGHBORHOOD') == element]
-        # append lists to tuple
-        data_dict[index] = newlist
-    print("data_dict", data_dict)
-    return data_dict
-
 def filter_time_interval(interval, data):
     if interval == "12AM-3AM":
         newlist = [result for result in data if result.get('hour') == '00' or result.get('hour') == '01'
@@ -166,22 +154,118 @@ def filter_dataset(interval, data):
     return filtered_results
 
 
-def switch_grids(grid):
-    if grid == "700 meters":
+def switch_grids(grid, interval):
+    if grid == "700 meters" and interval == "12AM-11PM":
         return gridcounts["700meters"]
-    elif grid == "750 meters":
+    elif grid == "700 meters" and interval == "12AM-3AM":
+        return gridcounts["700meters"]
+    elif grid == "700 meters" and interval == "4AM-7AM":
+        return gridcounts["700meters"]
+    elif grid == "700 meters" and interval == "8AM-11AM":
+        return gridcounts["700meters"]
+    elif grid == "700 meters" and interval == "12PM-3PM":
+        return gridcounts["700meters"]
+    elif grid == "700 meters" and interval == "4PM-7PM":
+        return gridcounts["700meters"]
+    elif grid == "700 meters" and interval == "8PM-11PM":
+        return gridcounts["700meters"]
+    elif grid == "750 meters" and interval == "12AM-11PM":
         return gridcounts["750meters"]
-    elif grid == "800 meters":
+    elif grid == "750 meters" and interval == "12AM-3AM":
+        return gridcounts["750meters"]
+    elif grid == "750 meters" and interval == "4AM-7AM":
+        return gridcounts["750meters"]
+    elif grid == "750 meters" and interval == "8AM-11AM":
+        return gridcounts["750meters"]
+    elif grid == "750 meters" and interval == "12PM-3PM":
+        return gridcounts["750meters"]
+    elif grid == "750 meters" and interval == "4PM-7PM":
+        return gridcounts["750meters"]
+    elif grid == "750 meters" and interval == "8PM-11PM":
+        return gridcounts["750meters"]
+    elif grid == "800 meters" and interval == "12AM-11PM":
         return gridcounts["800meters"]
-    elif grid == "850 meters":
+    elif grid == "800 meters" and interval == "12AM-3AM":
         return gridcounts["800meters"]
-    if grid == "900 meters":
+    elif grid == "800 meters" and interval == "4AM-7AM":
+        return gridcounts["800meters"]
+    elif grid == "800 meters" and interval == "8AM-11AM":
+        return gridcounts["800meters"]
+    elif grid == "800 meters" and interval == "12PM-3PM":
+        return gridcounts["800meters"]
+    elif grid == "800 meters" and interval == "4PM-7PM":
+        return gridcounts["800meters"]
+    elif grid == "800 meters" and interval == "8PM-11PM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "12AM-11PM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "12AM-3AM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "4AM-7AM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "8AM-11AM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "12PM-3PM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "4PM-7PM":
+        return gridcounts["800meters"]
+    elif grid == "850 meters" and interval == "8PM-11PM":
+        return gridcounts["800meters"]
+    elif grid == "900 meters" and interval == "12AM-11PM":
         return gridcounts["900meters"]
-    elif grid == "950 meters":
+    elif grid == "900 meters" and interval == "12AM-3AM":
+        return gridcounts["900meters"]
+    elif grid == "900 meters" and interval == "4AM-7AM":
+        return gridcounts["900meters"]
+    elif grid == "900 meters" and interval == "8AM-11AM":
+        return gridcounts["900meters"]
+    elif grid == "900 meters" and interval == "12PM-3PM":
+        return gridcounts["900meters"]
+    elif grid == "900 meters" and interval == "4PM-7PM":
+        return gridcounts["900meters"]
+    elif grid == "900 meters" and interval == "8PM-11PM":
+        return gridcounts["900meters"]
+    elif grid == "950 meters" and interval == "12AM-11PM":
         return gridcounts["950meters"]
-    elif grid == "1 kilometer":
+    elif grid == "950 meters" and interval == "12AM-3AM":
+        return gridcounts["950meters"]
+    elif grid == "950 meters" and interval == "4AM-7AM":
+        return gridcounts["950meters"]
+    elif grid == "950 meters" and interval == "8AM-11AM":
+        return gridcounts["950meters"]
+    elif grid == "950 meters" and interval == "12PM-3PM":
+        return gridcounts["950meters"]
+    elif grid == "950 meters" and interval == "4PM-7PM":
+        return gridcounts["950meters"]
+    elif grid == "950 meters" and interval == "8PM-11PM":
+        return gridcounts["950meters"]
+    elif grid == "1 kilometer" and interval == "12AM-11PM":
         return gridcounts["1kilometer"]
-    elif grid == "1 mile":
+    elif grid == "1 kilometer" and interval == "12AM-3AM":
+        return gridcounts["1kilometer"]
+    elif grid == "1 kilometer" and interval == "4AM-7AM":
+        return gridcounts["1kilometer"]
+    elif grid == "1 kilometer" and interval == "8AM-11AM":
+        return gridcounts["1kilometer"]
+    elif grid == "1 kilometer" and interval == "12PM-3PM":
+        return gridcounts["1kilometer"]
+    elif grid == "1 kilometer" and interval == "4PM-7PM":
+        return gridcounts["1kilometer"]
+    elif grid == "1 kilometer" and interval == "8PM-11PM":
+        return gridcounts["1kilometer"]
+    elif grid == "1 mile" and interval == "12AM-11PM":
+        return gridcounts["1mile"]
+    elif grid == "1 mile" and interval == "12AM-3AM":
+        return gridcounts["1mile"]
+    elif grid == "1 mile" and interval == "4AM-7AM":
+        return gridcounts["1mile"]
+    elif grid == "1 mile" and interval == "8AM-11AM":
+        return gridcounts["1mile"]
+    elif grid == "1 mile" and interval == "12PM-3PM":
+        return gridcounts["1mile"]
+    elif grid == "1 mile" and interval == "4PM-7PM":
+        return gridcounts["1mile"]
+    elif grid == "1 mile" and interval == "8PM-11PM":
         return gridcounts["1mile"]
 
 
@@ -252,83 +336,97 @@ def get_crimecounts_forlocation(coordinates, data, distance):
     return len(distance_near_list)
 
 
-# list of tuples
-GRID_DISTANCES_LIST = [
-    # (700, "meters", "All"),
-    # (700, "meters", "12AM-3AM")
-    (700, "meters", "4AM-7AM")
-    # (700, "meters", "8AM-11AM"),
-    # (700, "meters", "12PM-3PM"),
-    # (700, "meters", "4PM-7PM"),
-    # (700, "meters", "8PM-11PM"),
-    # (750, "meters", "All"),
-    # (750, "meters", "12AM-3AM"),
-    # (750, "meters", "4AM-7AM"),
-    # (750, "meters", "8AM-11AM"),
-    # (750, "meters", "12PM-3PM"),
-    # (750, "meters", "4PM-7PM"),
-    # (750, "meters", "8PM-11PM"),
-    # (800, "meters", "All"),
-    # (800, "meters", "12AM-3AM"),
-    # (800, "meters", "4AM-7AM"),
-    # (800, "meters", "8AM-11AM"),
-    # (800, "meters", "12PM-3PM"),
-    # (800, "meters", "4PM-7PM"),
-    # (800, "meters", "8PM-11PM"),
-    # (850, "meters", "All"),
-    # (850, "meters", "12AM-3AM"),
-    # (850, "meters", "4AM-7AM"),
-    # (850, "meters", "8AM-11AM"),
-    # (850, "meters", "12PM-3PM"),
-    # (850, "meters", "4PM-7PM"),
-    # (850, "meters", "8PM-11PM"),
-    # (900, "meters", "All"),
-    # (900, "meters", "12AM-3AM"),
-    # (900, "meters", "4AM-7AM"),
-    # (900, "meters", "8AM-11AM"),
-    # (900, "meters", "12PM-3PM"),
-    # (900, "meters", "4PM-7PM"),
-    # (900, "meters", "8PM-11PM"),
-    # (950, "meters", "All"),
-    # (950, "meters", "12AM-3AM"),
-    # (950, "meters", "4AM-7AM"),
-    # (950, "meters", "8AM-11AM"),
-    # (950, "meters", "12PM-3PM"),
-    # (950, "meters", "4PM-7PM"),
-    # (950, "meters", "8PM-11PM"),
-    # (1, "kilometer", "All"),
-    # (1, "kilometer", "12AM-3AM"),
-    # (1, "kilometer", "4AM-7AM"),
-    # (1, "kilometer", "8AM-11AM"),
-    # (1, "kilometer", "12PM-3PM"),
-    # (1, "kilometer", "4PM-7PM"),
-    # (1, "kilometer", "8PM-11PM"),
-    # (1, "mile", "All"),
-    # (1, "mile", "12AM-3AM"),
-    # (1, "mile", "4AM-7AM"),
-    # (1, "mile", "8AM-11AM"),
-    # (1, "mile", "12PM-3PM"),
-    # (1, "mile", "4PM-7PM"),
-    # (1, "mile", "8PM-11PM")
-]
-
-
 def create_dataframe(rowlist, collist, countlist, centerlist):
     print("create_dataframe")
     data = {'rows': rowlist, 'cols': collist, 'countlist': countlist, 'centerlist': centerlist}
     return data
 
 
+# assign true to middle element in list else false
 def get_middle_element_of_count_list(count_list):
     # if even
     if len(count_list) % 2 == 0:
         return (len(count_list) // 2) - 1
     else:
         return (len(count_list) - 1) // 2
-        # assign true to middle element in list else false
+
+
+def get_count_of_grid_histogram(polygon_dict, interval):
+    start_time = time.time()
+    sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
+    polygon_list = [search_within_polygon_histogram(sublist, interval) for sublist in sublists]
+    print("polygon_list", polygon_list)
+    print("--- %s secconds ---" % (time.time() - start_time))
+    return polygon_list
+
+
+def search_within_polygon_histogram(sublistelement, interval):
+    polygon_pipeline = [
+        {
+            "$match": {
+                "point": {
+                    "$geoWithin": {
+                        "$geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                sublistelement
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+
+    if interval == "12AM-3AM":
+        result = IntervalOne.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return len(polygon_result_list)
+    elif interval == "4AM-7AM":
+        result = IntervalTwo.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return len(polygon_result_list)
+    elif interval == "8AM-11AM":
+        result = IntervalThree.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return len(polygon_result_list)
+    elif interval == "12PM-3PM":
+        result = IntervalFour.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return len(polygon_result_list)
+    elif interval == "4PM-7PM":
+        result = IntervalFive.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return len(polygon_result_list)
+    elif interval == "8PM-11PM":
+        result = IntervalSix.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return len(polygon_result_list)
+    else:
+        # All intervals
+        result = Model.objects.aggregate(*polygon_pipeline)
+        polygon_result_list = [doc for doc in result]
+        if len(polygon_result_list) != 0:
+            print("polygon_result_list", len(polygon_result_list))
+            return polygon_result_list
+        else:
+            return 0
 
 
 def get_count_of_grid_heatmap(polygon_dict, interval):
+    print("Calling get_count_of_grid_heatmap")
     start_time = time.time()
     sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
     count_list = [search_within_polygon_heatmap(sublist, interval) for sublist in sublists]
@@ -406,42 +504,6 @@ def search_within_polygon_heatmap(sublistelement, interval):
             print("new_data_list", polygon_result_list[0])
             print("polygon_result_list", len(polygon_result_list))
         return len(polygon_result_list)
-
-
-def get_count_of_grid_new(polygon_dict, interval, data):
-    start_time = time.time()
-    sublists = [polygon_dict[i:i + 5] for i in range(0, len(polygon_dict), 5)]
-    count_list = [search_within_polygon(sublist, interval, data) for sublist in sublists]
-    print("count_list", count_list)
-    print("--- %s secconds ---" % (time.time() - start_time))
-    return count_list
-
-
-def search_within_polygon(sublistelement, interval, data):
-    # start_time = time.time()
-    polygon_pipeline = [
-        {
-            "$match": {
-                "point": {
-                    "$geoWithin": {
-                        "$geometry": {
-                            "type": "Polygon",
-                            "coordinates": [
-                                sublistelement
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-    ]
-
-    result = PolygonModel.objects.aggregate(*polygon_pipeline)
-    polygon_result_list = [doc for doc in result]
-    if len(polygon_result_list) != 0:
-        print("new_data_list", polygon_result_list[0])
-        print("polygon_result_list", len(polygon_result_list))
-    return len(polygon_result_list)
 
 
 def reverse_coordinates(geojson):
@@ -618,6 +680,8 @@ def create_heatmap_polygon(distance, point):
 def delete_heatmap_files():
     data_folder = "data"
 
+    heatmap_folder = "heatmap"
+
     heatmap_files = [
         "heatmap_data_safe.csv",
         "heatmap_data_work.csv",
@@ -629,7 +693,7 @@ def delete_heatmap_files():
     errors = []
 
     for file in heatmap_files:
-        file_path = os.path.join(PROJECT_DIR, data_folder, file)
+        file_path = os.path.join(PROJECT_DIR, data_folder, heatmap_folder, file)
         print("file_path", file_path)
         try:
             if os.path.exists(file_path):
@@ -647,6 +711,7 @@ def delete_heatmap_file_endpoint():
     # iterate through files in folder and delete
 
     data_folder = "data"
+    heatmap_folder = "heatmap"
 
     heatmap_files = [
         "heatmap_data_safe.csv",
@@ -659,7 +724,7 @@ def delete_heatmap_file_endpoint():
     errors = []
 
     for file in heatmap_files:
-        file_path = os.path.join(PROJECT_DIR, data_folder, file)
+        file_path = os.path.join(PROJECT_DIR, data_folder, heatmap_folder, file)
         print("file_path", file_path)
         try:
             if os.path.exists(file_path):
@@ -674,15 +739,6 @@ def delete_heatmap_file_endpoint():
         'deleted_files': deleted_files,
         'errors': errors
     }), 200
-
-@app.route('/deletenewgrid')
-def delete_grid():
-    try:
-        # Delete all documents from the PolygonModel collection
-        deleted_count = PolygonModel.objects().delete()
-        return jsonify({"status": "success", "deleted_count": deleted_count}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route('/deletefilteredmodels')
@@ -758,67 +814,157 @@ def create_filtered_models():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# Model add hour field aggregate to police_cinci_data_new
-# filter out where point = [0,0]
-# Filter out offense list
-# iterate through result list and save to new model
-# from the new model filter by the interval then apply the polygon_pipeline
-@app.route('/createnewgrid')
-def create_grids():
+def get_data(response, filename):
+    json_str = response.get_data(as_text=True)
+    python_dict = json.loads(json_str)
+    # flattened list
+    data_not_none_list = [d for sublist in python_dict for d in (sublist if isinstance(sublist, list) else [sublist]) if
+                          d != 0]
+    data_none_list = [element for element in python_dict if element == 0]
+    print("data_not_none_list", data_not_none_list)
+
+    neighborhood_result_list = []
+    for element in data_not_none_list:
+        if isinstance(element, dict) and 'CPD_NEIGHBORHOOD' in element:
+            neighborhood_result_list.append(element['CPD_NEIGHBORHOOD'])
+    print("neighborhood_result_list", neighborhood_result_list)
+    # group counts by the neighborhood
+    set_neighborhood_result_list = set(neighborhood_result_list)
+    print("set_neighborhood_result_list", set_neighborhood_result_list)
+
+    filtered_count_list = []
+    for k in set_neighborhood_result_list:
+        filtered_list = [element for element in data_not_none_list if element.get('CPD_NEIGHBORHOOD') == k]
+        print("filtered_list", filtered_list)
+        filtered_count = len(filtered_list)
+        filtered_count_list.append(filtered_count)
+
+    print("data_none_list", data_none_list)
+    print("filtered_count_list", filtered_count_list)
+
+    appended_list = data_none_list + filtered_count_list
+    new_neighborhood_list = list(set_neighborhood_result_list)
+
+    print("appended_list", appended_list)
+
+    datajson = {
+        "appended_list": appended_list,
+        "new_neighborhood_list": new_neighborhood_list
+    }
+
+    file_name = os.path.join(PROJECT_DIR, "data", "histogram", filename + ".json")
+
+    # Write JSON data to a file
+    if datajson:
+        with open(file_name, 'w') as file:
+            json.dump(datajson, file, indent=4)
+    else:
+        print("data not created")
+
+    return datajson
+
+
+@app.route('/createnewgrids')
+def create_new_grids():
+    # call create_grids(element)
+    # element is tuple
+    # return response files created
+
+    create_grids((700, "meters", "All"))
+    # create_grids((700, "meters", "12AM-3AM"))
+    # create_grids((700, "meters", "4AM-7AM"))
+    # create_grids((700, "meters", "8AM-11AM"))
+    # create_grids((700, "meters", "12PM-3PM"))
+    # create_grids((700, "meters", "4PM-7PM"))
+    # create_grids((700, "meters", "8PM-11PM"))
+    # create_grids((750, "meters", "All"))
+    # create_grids((750, "meters", "12AM-3AM"))
+    # create_grids((750, "meters", "4AM-7AM"))
+    # create_grids((750, "meters", "8AM-11AM"))
+    # create_grids((750, "meters", "12PM-3PM"))
+    # create_grids((750, "meters", "4PM-7PM"))
+    # create_grids((750, "meters", "8PM-11PM"))
+    # create_grids((800, "meters", "All"))
+    # create_grids((800, "meters", "12AM-3AM"))
+    # create_grids((800, "meters", "4AM-7AM"))
+    # create_grids((800, "meters", "8AM-11AM"))
+    # create_grids((800, "meters", "12PM-3PM"))
+    # create_grids((800, "meters", "4PM-7PM"))
+    # create_grids((800, "meters", "8PM-11PM"))
+    # create_grids((850, "meters", "All"))
+    # create_grids((850, "meters", "12AM-3AM"))
+    # create_grids((850, "meters", "4AM-7AM"))
+    # create_grids((850, "meters", "8AM-11AM"))
+    # create_grids((850, "meters", "12PM-3PM"))
+    # create_grids((850, "meters", "4PM-7PM"))
+    # create_grids((850, "meters", "8PM-11PM"))
+    # create_grids((900, "meters", "All"))
+    # create_grids((900, "meters", "12AM-3AM"))
+    # create_grids((900, "meters", "4AM-7AM"))
+    # create_grids((900, "meters", "8AM-11AM"))
+    # create_grids((900, "meters", "12PM-3PM"))
+    # create_grids((900, "meters", "4PM-7PM"))
+    # create_grids((900, "meters", "8PM-11PM"))
+    # create_grids((950, "meters", "All"))
+    # create_grids((950, "meters", "12AM-3AM"))
+    # create_grids((950, "meters", "4AM-7AM"))
+    # create_grids((950, "meters", "8AM-11AM"))
+    # create_grids((950, "meters", "12PM-3PM"))
+    # create_grids((950, "meters", "4PM-7PM"))
+    # create_grids((950, "meters", "8PM-11PM"))
+    # create_grids((1, "kilometer", "All"))
+    # create_grids((1, "kilometer", "12AM-3AM"))
+    # create_grids((1, "kilometer", "4AM-7AM"))
+    # create_grids((1, "kilometer", "8AM-11AM"))
+    # create_grids((1, "kilometer", "12PM-3PM"))
+    # create_grids((1, "kilometer", "4PM-7PM"))
+    # create_grids((1, "kilometer", "8PM-11PM"))
+    # create_grids((1, "mile", "All"))
+    # create_grids((1, "mile", "12AM-3AM"))
+    # create_grids((1, "mile", "4AM-7AM"))
+    # create_grids((1, "mile", "8AM-11AM"))
+    # create_grids((1, "mile", "12PM-3PM"))
+    # create_grids((1, "mile", "4PM-7PM"))
+    # create_grids((1, "mile", "8PM-11PM"))
+
+    return "Files Created", 200
+
+
+def create_grids(element):
     polygon_list = []
 
-    element = (700, "meters", "4AM-7AM")
+    # element = (850, "meters", "All")
 
-    # need to avoid adding new records to save
-    hour_aggregate_data = load_dataset2()
-    # for element in GRID_DISTANCES_LIST:
+    file_name = str(element[0]) + element[1] + element[2]
+
     distance = get_meters(element[0], element[1])
     print("distance", distance)
-    grid = create_grid(distance)
+    grid = create_grid2(distance)
     interval = element[2]
-
-    data = filter_dataset(interval, hour_aggregate_data)
-    filtered_data_list = [doc for doc in data]
-    for doc in filtered_data_list:
-        new_model_instance = PolygonModel(**doc)
-        new_model_instance.save()
-
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
     polygon = reverse_coordinates(grid_geojson_parsed)
     # print("polygon", polygon)
     polygon_list.append(polygon)
-    #divide the filtered dataset by sna neighborhoods
-    count_new_list = []
-    sna_neighborhood_name = []
-    
-    cpd_neighborhoods = filter_by_cpd_neighborhood(data)
-    for value in cpd_neighborhoods.values():
-        for v in value:
-            # v = neighborhood object
-            # get first v sna_neighborhood value
-            name = v['CPD_NEIGHBORHOOD']
-            # add name to a list of distinct elements
-            sna_neighborhood_name.append(name)
-            # neighborhood + time interval
-            count_new = get_count_of_grid_new(polygon, interval, v)
-            count_new_list.append(count_new)
+    # TODO Need to fix the performance - function is called twice
+    data_list = get_count_of_grid_histogram(polygon, interval)
 
-    set_cpd_neighborhoods = set(cpd_neighborhoods)
-    print("length of set_cpd_neighborhoods", len(set_cpd_neighborhoods))
-    print("count_new_list", count_new_list)
-    print("length of count_new_list", len(count_new_list))
-    # count_list = get_count_of_grid_new(polygon, interval, data)
-    # print("element", element)
-    # print("count_list", count_list)
+    json_data_list = jsonify(data_list)
 
-    return jsonify(polygon_list)
+    return get_data(json_data_list, file_name)
+
+
+# Model add hour field aggregate to police_cinci_data_new
+# filter out where point = [0,0]
+# Filter out offense list
+# iterate through result list and save to new model
+# from the new model filter by the interval then apply the polygon_pipeline
 
 
 @app.route('/testgrids')
 def test_grids():
     distance = get_meters(950, "meters")
-    grid = create_grid(distance)
+    grid = create_grid2(distance)
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
     print("grid_geojson_parsed", grid_geojson_parsed)
@@ -840,7 +986,7 @@ def test_heatmap_grid():
 @app.route('/success/<safe>/<work>/<current>/<destination>/<interval>/<gridsize>')
 def success(safe, work, current, destination, interval, gridsize):
     geolocator = Nominatim(user_agent="project-flask")
-    delete_heatmap_files()
+    # delete_heatmap_files()
     try:
         safelocation = geolocator.geocode(safe)
         worklocation = geolocator.geocode(work)
@@ -863,10 +1009,14 @@ def success(safe, work, current, destination, interval, gridsize):
         radius = gridsplit[0]
         unit = gridsplit[1]
 
+        print("gridsize", gridsize)
+        selected_grid = switch_grids(gridsize, interval)
+        print("selected_grid", selected_grid)
+
         user.interval = interval
         user.radius = radius
         user.units = unit
-        user.grid = gridsize
+        user.grid = selected_grid
 
         aggregate_data = load_dataset()
         data = filter_dataset(user.interval, aggregate_data)
@@ -934,10 +1084,10 @@ def success(safe, work, current, destination, interval, gridsize):
         df_destination = pd.DataFrame(destination_dataframe)
 
         # Convert created DataFrame to CSV
-        df_safe.to_csv('data/heatmap_data_safe.csv', index=False)
-        df_work.to_csv('data/heatmap_data_work.csv', index=False)
-        df_current.to_csv('data/heatmap_data_current.csv', index=False)
-        df_destination.to_csv('data/heatmap_data_destination.csv', index=False)
+        df_safe.to_csv('data/heatmap/heatmap_data_safe.csv', index=False)
+        df_work.to_csv('data/heatmap/heatmap_data_work.csv', index=False)
+        df_current.to_csv('data/heatmap/heatmap_data_current.csv', index=False)
+        df_destination.to_csv('data/heatmap/heatmap_data_destination.csv', index=False)
 
         return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
                                current=countcurrent, destination=countdestination)
