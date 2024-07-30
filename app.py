@@ -852,7 +852,7 @@ def get_data(response, filename):
         "new_neighborhood_list": new_neighborhood_list
     }
 
-    file_name = os.path.join(PROJECT_DIR, "data", "histogram", filename + ".json")
+    file_name = os.path.join(PROJECT_DIR, "data","static", "histogram", filename + ".json")
 
     # Write JSON data to a file
     if datajson:
@@ -1067,14 +1067,14 @@ def success(safe, work, current, destination, interval, gridsize):
         safe_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_safe_center_point_list)
         print("safe_dataframe", safe_dataframe)
 
-        work_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_work_center_point_list)
+        work_dataframe = create_dataframe(rows_list, col_list, work_count_list, conditional_work_center_point_list)
         print("work_dataframe", work_dataframe)
 
-        current_dataframe = create_dataframe(rows_list, col_list, safe_count_list,
+        current_dataframe = create_dataframe(rows_list, col_list, current_count_list,
                                              conditional_current_center_point_list)
         print("current_dataframe", current_dataframe)
 
-        destination_dataframe = create_dataframe(rows_list, col_list, safe_count_list,
+        destination_dataframe = create_dataframe(rows_list, col_list, destination_count_list,
                                                  conditional_destination_center_point_list)
         print("destination_dataframe", destination_dataframe)
 
@@ -1084,10 +1084,10 @@ def success(safe, work, current, destination, interval, gridsize):
         df_destination = pd.DataFrame(destination_dataframe)
 
         # Convert created DataFrame to CSV
-        df_safe.to_csv('data/heatmap/heatmap_data_safe.csv', index=False)
-        df_work.to_csv('data/heatmap/heatmap_data_work.csv', index=False)
-        df_current.to_csv('data/heatmap/heatmap_data_current.csv', index=False)
-        df_destination.to_csv('data/heatmap/heatmap_data_destination.csv', index=False)
+        df_safe.to_csv('static/data/heatmap/heatmap_data_safe.csv', index=False)
+        df_work.to_csv('static/data/heatmap/heatmap_data_work.csv', index=False)
+        df_current.to_csv('static/data/heatmap/heatmap_data_current.csv', index=False)
+        df_destination.to_csv('static/data/heatmap/heatmap_data_destination.csv', index=False)
 
         return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
                                current=countcurrent, destination=countdestination)
