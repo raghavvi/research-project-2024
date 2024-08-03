@@ -1061,8 +1061,8 @@ def success(safe, work, current, destination, interval, gridsize):
 
         rows_list = ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "C", "C", "C", "C", "C", "D", "D", "D", "D", "D",
                      "E", "E", "E", "E", "E"]
-        col_list = ["C1", "C2", "C3", "C4", "C5", "C1", "C2", "C3", "C4", "C5", "C1", "C2", "C3", "C4", "C5",
-                    "C1", "C2", "C3", "C4", "C5", "C1", "C2", "C3", "C4", "C5"]
+        col_list = ["v1", "v2", "v3", "v4", "v5", "v1", "v2", "v3", "v4", "v5", "v1", "v2", "v3", "v4", "v5",
+                    "v1", "v2", "v3", "v4", "v5", "v1", "v2", "v3", "v4", "v5"]
 
         safe_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_safe_center_point_list)
         print("safe_dataframe", safe_dataframe)
