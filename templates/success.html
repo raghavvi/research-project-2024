@@ -60,6 +60,11 @@
             background-color: #6a696b;
         }
 
+        .heatmap-dropdown {
+              width: 25px;
+              height: 25px
+        }
+
         .dial-container {
             width: 100%;
             height: 22%;
@@ -162,7 +167,6 @@
 </head>
 
 <div class="visual-button-container">
-<!--    <button >View Visualizations</button>-->
     <i onclick="openVisualization()" class="arrow up"></i>
 </div>
 
@@ -174,6 +178,14 @@
     </div>
     <div class="heatmap-container">
         <br>
+        <div class="heatmap-dropdown">
+            <select name="heatmap-dropdown" id="heatmap-dropdown">
+                <option value="safe">safe</option>
+                <option value="work">work</option>
+                <option value="current">current</option>
+                <option value="destination">destination</option>
+            </select>
+        </div>
         <div id="heatmap"></div>
     </div>
     <div class="dial-container">
