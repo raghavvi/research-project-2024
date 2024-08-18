@@ -27,18 +27,23 @@
             position: relative;
         }
 
+        .tooltip {
+            margin: auto;
+        }
+
         .histogram-container {
             width: 100%;
-            height: 40%;
+            height: 33%;
             margin:auto;
             text-align:center;
-            background-color: white;
+            background-color: #6a696b;
         }
 
         #histogram {
             width: 180px;
             height: 50px;
             z-index: 1005;
+            top: 15px;
         }
 
         #heatmap {
@@ -49,11 +54,20 @@
 
         .heatmap-container {
             width: 100%;
-            height: 60%;
+            height: 45%;
             margin:auto;
             text-align:center;
-            background-color: pink;
+            background-color: #6a696b;
         }
+
+        .dial-container {
+            width: 100%;
+            height: 22%;
+            margin:auto;
+            text-align:center;
+            background-color: #6a696b;
+        }
+
 
         .container {
             position: relative;
@@ -61,16 +75,33 @@
             height: 100%;
         }
 
-        .button-vis-container {
+        .visual-button-container {
             position: absolute;
-            right: 55px;
-            bottom: 105px;
-            width: 40px;
-            height: 50px;
-            background-color: #272343;
+            display: block;
+            z-index: 999998;
+            padding: 10px;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: green;
+            width: 97%;
         }
 
-        .bottom {
+        .arrow {
+              border: solid black;
+              border-width: 0 4px 4px 0;
+              display: inline-block;
+              padding: 3px;
+              margin: 0;
+        }
+
+        .up {
+          transform: rotate(-135deg);
+          -webkit-transform: rotate(-135deg);
+        }
+
+        .bottom-element {
             position: absolute;
             width: 100%; /* Take up half of the container */
             box-sizing: border-box; /* Include padding and border in the width */
@@ -82,8 +113,17 @@
              z-index: 999999;
         }
 
+        .closeVis {
+            font-size: 25px;
+            font-weight: 580;
+            top: 10px;   /* Position closeVis 10px from the top */
+            right: 10px;
+            z-index: 100000000;
+            position: absolute;
+        }
+
        .map-container {
-            height: 485px;
+            height: 510px;
         }
 
        #map {
@@ -121,20 +161,40 @@
 
 </head>
 
-<div class="bottom">
+<div class="visual-button-container">
+<!--    <button >View Visualizations</button>-->
+    <i onclick="openVisualization()" class="arrow up"></i>
+</div>
+
+<div class="bottom-element" id="visualizationForm">
+    <span class="closeVis" onclick="closeVisualization()">&times;</span>
     <div class="histogram-container">
-        histogram element
+        <br>
         <div id="histogram"></div>
     </div>
     <div class="heatmap-container">
-        heatmap element
+        <br>
         <div id="heatmap"></div>
     </div>
-
+    <div class="dial-container">
+        Dial Container
+    </div>
 </div>
 
+<script>
+    function openVisualization() {
+        console.log("Button is clicked.");
+        document.getElementById("visualizationForm").style.display = "block";
+    }
+
+    function closeVisualization() {
+        console.log("Close Button is clicked Function is accessed");
+        document.getElementById("visualizationForm").style.display = "none";
+    }
+</script>
 
 <script>
+
     // Add an event listener to the button
 
     function addHistogram() {
@@ -188,15 +248,81 @@
        svg.append("g")
        .call(d3.axisLeft(y));
 
+        // Add X axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", width)
+            .attr("font-size", "10px")
+            .attr("y", height + margin.top + 20)
+            .text("X axis title");
+
+        // Y axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -margin.left + 5)
+            .attr("x", -margin.top - 15 )
+            .attr("font-size", "10px")
+            .text("Y axis title")
+
+        svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", 0 - (margin.top / 2) + 20)
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .style("text-decoration", "underline")
+            .text("Histogram");
+
+      // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+      // Its opacity is set to 0: we don't see it by default.
+      const tooltip = d3.select("#histogram")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "#466c9e")
+        .style("color", "white")
+        .style("border-radius", "5px")
+        .style("width", "55px")
+        .style("height", "15px")
+        .style("font-size", ".575rem")
+
+      // A function that change this tooltip when the user hover a point.
+      // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+      const showTooltip = function(event,d) {
+        tooltip
+          .transition()
+          .duration(100)
+          .style("opacity", 1)
+        tooltip
+          .html(d.length)
+          .style("left", (event.x)/2-100 + "px")
+          .style("top", (event.y)/2 + "px")
+      }
+      const moveTooltip = function(event,d) {
+        tooltip
+        .style("left", (event.x)/2-100 + "px")
+        .style("top", (event.y)/2 + "px")
+      }
+      // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+      const hideTooltip = function(event,d) {
+        tooltip
+          .transition()
+          .duration(100)
+          .style("opacity", 0)
+      }
+
        // append the bar rectangles to the svg element
        svg.selectAll("rect")
        .data(bins)
        .join("rect")
        .attr("x", 1)
        .attr("transform", function(d) { return `translate(${x(d.x0)} , ${y(d.length)})`})
-       .attr("width", function(d) { return x(d.x1) - x(d.x0) -1})
+       .attr("width", function(d) { return x(d.x1) - x(d.x0) - 0.375; })
        .attr("height", function(d) { return height - y(d.length); })
-       .style("fill", "#69b3a2");
+       .style("fill", "#466c9e")
+       .on("mouseover", showTooltip)
+       .on("mousemove", moveTooltip)
+       .on("mouseleave", hideTooltip);
     }
 
 
@@ -236,6 +362,31 @@
         svg.append("g")
           .call(d3.axisLeft(y));
 
+        // Add X axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("font-size", "10px")
+            .attr("x", width)
+            .attr("y", height + margin.top)
+            .text("X axis title");
+
+        // Y axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("font-size", "10px")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -margin.left+ 5)
+            .attr("x", -margin.top + 5)
+            .text("Y axis title")
+
+          svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .style("text-decoration", "underline")
+            .text("Heatmap");
+
         // Build color scale
         const myColor = d3.scaleLinear()
           .range(["white", "#69b3a2"])
@@ -256,14 +407,11 @@
             .append("div")
             .style("opacity", 0)
             .attr("class", "tooltip")
-            .style("background-color", "white")
-            .style("border", "solid")
-            .style("border-width", "2px")
+            .style("background-color", "#466c9e")
             .style("border-radius", "5px")
-            .style("padding", "5px")
-            .style("width", "200px")
-            .style("height", "55px")
-            .style("top", 0)
+            .style("width", "55px")
+            .style("height", "15px")
+            .style("font-size", ".575rem")
 
           // Three function that change the tooltip when user hover / move / leave a cell
           const mouseover = function(event,d) {
@@ -271,7 +419,7 @@
           }
           const mousemove = function(event,d) {
             tooltip
-              .html("The exact value of<br>this cell is: " + d.countlist)
+              .html(d.countlist)
               .style("left", (event.x)/2 + "px")
               .style("top", (event.y)/2 + "px")
           }
