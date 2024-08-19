@@ -90,7 +90,7 @@
             justify-content: center;
             align-items: center;
             background-color: green;
-            width: 97%;
+            width: 100%;
         }
 
         .arrow {
@@ -111,7 +111,7 @@
             width: 100%; /* Take up half of the container */
             box-sizing: border-box; /* Include padding and border in the width */
             display: block;
-            background-color: red;
+            background-color: white;
             height: 85%;
             bottom: 0;
             left: 0;
@@ -172,26 +172,39 @@
 
 <div class="bottom-element" id="visualizationForm">
     <span class="closeVis" onclick="closeVisualization()">&times;</span>
-    <div class="histogram-container">
-        <br>
-        <div id="histogram"></div>
-    </div>
-    <div class="heatmap-container">
-        <br>
-        <div class="heatmap-dropdown">
-            <select name="heatmap-dropdown" id="heatmap-dropdown">
-                <option value="safe">safe</option>
-                <option value="work">work</option>
-                <option value="current">current</option>
-                <option value="destination">destination</option>
-            </select>
+
+    <ul class="nav nav-tabs">
+        <li><a data-toggle="tab" href="#menu1">Histogram</a></li>
+        <li><a data-toggle="tab" href="#menu2">Heatmap</a></li>
+        <li><a data-toggle="tab" href="#menu3">Dial</a></li>
+    </ul>
+
+
+    <div class="tab-content">
+        <div id="menu1" class="tab-pane fade">
+            <div id="histogram"></div>
         </div>
-        <div id="heatmap"></div>
+
+        <div id="menu2" class="tab-pane fade">
+            <div class="heatmap-dropdown">
+                <select name="heatmap-dropdown" id="heatmap-dropdown">
+                    <option value="safe">safe</option>
+                    <option value="work">work</option>
+                    <option value="current">current</option>
+                    <option value="destination">destination</option>
+                </select>
+            </div>
+            <div id="heatmap"></div>
+        </div>
+
+        <div id="menu3" class="tab-pane fade">
+            Dial Container
+        </div>
     </div>
-    <div class="dial-container">
-        Dial Container
-    </div>
+
+
 </div>
+
 
 <script>
     function openVisualization() {
@@ -311,9 +324,12 @@
           .style("top", (event.y)/2 + "px")
       }
       const moveTooltip = function(event,d) {
+        const svgWidth = width + margin.left + margin.right;
+        const tooltipWidth = parseFloat(tooltip.style("width"));
+        const tooltipHeight = parseFloat(tooltip.style("height"));
         tooltip
-        .style("left", (event.x)/2-100 + "px")
-        .style("top", (event.y)/2 + "px")
+        .style("left", (event.pageX - (tooltipWidth / 2)) + "px")
+        .style("top", (event.pageY - tooltipHeight - 10) + "px");
       }
       // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
       const hideTooltip = function(event,d) {
@@ -464,9 +480,6 @@
     addHistogram()
     addHeatmap()
 
-
-
-
 </script>
 
 
@@ -513,7 +526,6 @@
                     });
             }
 
-
         });
 
         // Function to convert Turf.js coordinates to Google Maps API polygons
@@ -530,7 +542,6 @@
            });
            return polygons;
         }
-
 
     }
 
