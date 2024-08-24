@@ -154,125 +154,349 @@ def filter_dataset(interval, data):
     return filtered_results
 
 
-def switch_grids(grid, interval):
-    if grid == "700 meters" and interval == "12AM-11PM":
-        return gridcounts["700meters"]
-    elif grid == "700 meters" and interval == "12AM-3AM":
-        return gridcounts["700meters"]
-    elif grid == "700 meters" and interval == "4AM-7AM":
-        return gridcounts["700meters"]
-    elif grid == "700 meters" and interval == "8AM-11AM":
-        return gridcounts["700meters"]
-    elif grid == "700 meters" and interval == "12PM-3PM":
-        return gridcounts["700meters"]
-    elif grid == "700 meters" and interval == "4PM-7PM":
-        return gridcounts["700meters"]
-    elif grid == "700 meters" and interval == "8PM-11PM":
-        return gridcounts["700meters"]
-    elif grid == "750 meters" and interval == "12AM-11PM":
-        return gridcounts["750meters"]
-    elif grid == "750 meters" and interval == "12AM-3AM":
-        return gridcounts["750meters"]
-    elif grid == "750 meters" and interval == "4AM-7AM":
-        return gridcounts["750meters"]
-    elif grid == "750 meters" and interval == "8AM-11AM":
-        return gridcounts["750meters"]
-    elif grid == "750 meters" and interval == "12PM-3PM":
-        return gridcounts["750meters"]
-    elif grid == "750 meters" and interval == "4PM-7PM":
-        return gridcounts["750meters"]
-    elif grid == "750 meters" and interval == "8PM-11PM":
-        return gridcounts["750meters"]
-    elif grid == "800 meters" and interval == "12AM-11PM":
-        return gridcounts["800meters"]
-    elif grid == "800 meters" and interval == "12AM-3AM":
-        return gridcounts["800meters"]
-    elif grid == "800 meters" and interval == "4AM-7AM":
-        return gridcounts["800meters"]
-    elif grid == "800 meters" and interval == "8AM-11AM":
-        return gridcounts["800meters"]
-    elif grid == "800 meters" and interval == "12PM-3PM":
-        return gridcounts["800meters"]
-    elif grid == "800 meters" and interval == "4PM-7PM":
-        return gridcounts["800meters"]
-    elif grid == "800 meters" and interval == "8PM-11PM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "12AM-11PM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "12AM-3AM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "4AM-7AM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "8AM-11AM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "12PM-3PM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "4PM-7PM":
-        return gridcounts["800meters"]
-    elif grid == "850 meters" and interval == "8PM-11PM":
-        return gridcounts["800meters"]
-    elif grid == "900 meters" and interval == "12AM-11PM":
-        return gridcounts["900meters"]
-    elif grid == "900 meters" and interval == "12AM-3AM":
-        return gridcounts["900meters"]
-    elif grid == "900 meters" and interval == "4AM-7AM":
-        return gridcounts["900meters"]
-    elif grid == "900 meters" and interval == "8AM-11AM":
-        return gridcounts["900meters"]
-    elif grid == "900 meters" and interval == "12PM-3PM":
-        return gridcounts["900meters"]
-    elif grid == "900 meters" and interval == "4PM-7PM":
-        return gridcounts["900meters"]
-    elif grid == "900 meters" and interval == "8PM-11PM":
-        return gridcounts["900meters"]
-    elif grid == "950 meters" and interval == "12AM-11PM":
-        return gridcounts["950meters"]
-    elif grid == "950 meters" and interval == "12AM-3AM":
-        return gridcounts["950meters"]
-    elif grid == "950 meters" and interval == "4AM-7AM":
-        return gridcounts["950meters"]
-    elif grid == "950 meters" and interval == "8AM-11AM":
-        return gridcounts["950meters"]
-    elif grid == "950 meters" and interval == "12PM-3PM":
-        return gridcounts["950meters"]
-    elif grid == "950 meters" and interval == "4PM-7PM":
-        return gridcounts["950meters"]
-    elif grid == "950 meters" and interval == "8PM-11PM":
-        return gridcounts["950meters"]
-    elif grid == "1 kilometer" and interval == "12AM-11PM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 kilometer" and interval == "12AM-3AM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 kilometer" and interval == "4AM-7AM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 kilometer" and interval == "8AM-11AM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 kilometer" and interval == "12PM-3PM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 kilometer" and interval == "4PM-7PM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 kilometer" and interval == "8PM-11PM":
-        return gridcounts["1kilometer"]
-    elif grid == "1 mile" and interval == "12AM-11PM":
-        return gridcounts["1mile"]
-    elif grid == "1 mile" and interval == "12AM-3AM":
-        return gridcounts["1mile"]
-    elif grid == "1 mile" and interval == "4AM-7AM":
-        return gridcounts["1mile"]
-    elif grid == "1 mile" and interval == "8AM-11AM":
-        return gridcounts["1mile"]
-    elif grid == "1 mile" and interval == "12PM-3PM":
-        return gridcounts["1mile"]
-    elif grid == "1 mile" and interval == "4PM-7PM":
-        return gridcounts["1mile"]
-    elif grid == "1 mile" and interval == "8PM-11PM":
-        return gridcounts["1mile"]
+def switch_grids2(grid, interval):
 
+    file_all_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700metersAll.json')
+    file_12am_3am_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters12AM-3AM.json')
+    file_4am_7am_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters4AM-7AM.json')
+    file_8am_11am_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters8AM-11AM.json')
+    file_12pm_3pm_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters12PM-3PM.json')
+    file_4pm_7pm_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters4PM-7PM.json')
+    file_8pm_11pm_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters8PM-11PM.json')
+    file_all_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750metersAll.json')
+    file_12am_3am_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750meters12AM-3AM.json')
+    file_4am_7am_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750meters4AM-7AM.json')
+    file_8am_11am_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750meters8AM-11AM.json')
+    file_12pm_3pm_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750meters12PM-3PM.json')
+    file_4pm_7pm_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750meters4PM-7PM.json')
+    file_8pm_11pm_750meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '750meters8PM-11PM.json')
+    file_all_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800metersAll.json')
+    file_12am_3am_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800meters12AM-3AM.json')
+    file_4am_7am_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800meters4AM-7AM.json')
+    file_8am_11am_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800meters8AM-11AM.json')
+    file_12pm_3pm_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800meters12PM-3PM.json')
+    file_4pm_7pm_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800meters4PM-7PM.json')
+    file_8pm_11pm_800meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '800meters8PM-11PM.json')
+    file_all_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850metersAll.json')
+    file_12am_3am_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850meters12AM-3AM.json')
+    file_4am_7am_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850meters4AM-7AM.json')
+    file_8am_11am_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850meters8AM-11AM.json')
+    file_12pm_3pm_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850meters12PM-3PM.json')
+    file_4pm_7pm_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850meters4PM-7PM.json')
+    file_8pm_11pm_850meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '850meters8PM-11PM.json')
+    file_all_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900metersAll.json')
+    file_12am_3am_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900meters12AM-3AM.json')
+    file_4am_7am_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900meters4AM-7AM.json')
+    file_8am_11am_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900meters8AM-11AM.json')
+    file_12pm_3pm_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900meters12PM-3PM.json')
+    file_4pm_7pm_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900meters4PM-7PM.json')
+    file_8pm_11pm_900meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '900meters8PM-11PM.json')
+    file_all_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950metersAll.json')
+    file_12am_3am_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950meters12AM-3AM.json')
+    file_4am_7am_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950meters4AM-7AM.json')
+    file_8am_11am_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950meters8AM-11AM.json')
+    file_12pm_3pm_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950meters12PM-3PM.json')
+    file_4pm_7pm_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950meters4PM-7PM.json')
+    file_8pm_11pm_950meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '950meters8PM-11PM.json')
+    file_all_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometerAll.json')
+    file_12am_3am_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometer12AM-3AM.json')
+    file_4am_7am_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometer4AM-7AM.json')
+    file_8am_11am_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometer8AM-11AM.json')
+    file_12pm_3pm_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometer12PM-3PM.json')
+    file_4pm_7pm_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometer4PM-7PM.json')
+    file_8pm_11pm_1kilometer = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1kilometer8PM-11PM.json')
+    file_all_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mileAll.json')
+    file_12am_3am_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile12AM-3AM.json')
+    file_4am_7am_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile4AM-7AM.json')
+    file_8am_11am_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile8AM-11AM.json')
+    file_12pm_3pm_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile12PM-3PM.json')
+    file_4pm_7pm_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile4PM-7PM.json')
+    file_8pm_11pm_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile8PM-11PM.json')
+
+    if grid == "700 meters" and interval == "12AM-11PM":
+        with open(file_all_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "700 meters" and interval == "12AM-3AM":
+        with open(file_12am_3am_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "700 meters" and interval == "4AM-7AM":
+        with open(file_4am_7am_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "700 meters" and interval == "8AM-11AM":
+        with open(file_8am_11am_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "700 meters" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "700 meters" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "700 meters" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_700meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "12AM-11PM":
+        with open(file_all_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "12AM-3AM":
+        with open(file_12am_3am_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "4AM-7AM":
+        with open(file_4am_7am_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "8AM-11AM":
+        with open(file_8am_11am_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "750 meters" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_750meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "12AM-11PM":
+        with open(file_all_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "12AM-3AM":
+        with open(file_12am_3am_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "4AM-7AM":
+        with open(file_4am_7am_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "8AM-11AM":
+        with open(file_8am_11am_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "800 meters" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_800meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "12AM-11PM":
+        with open(file_all_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "12AM-3AM":
+        with open(file_12am_3am_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "4AM-7AM":
+        with open(file_4am_7am_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "8AM-11AM":
+        with open(file_8am_11am_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "850 meters" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_850meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "12AM-11PM":
+        with open(file_all_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "12AM-3AM":
+        with open(file_12am_3am_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "4AM-7AM":
+        with open(file_4am_7am_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "8AM-11AM":
+        with open(file_8am_11am_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "900 meters" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_900meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "12AM-11PM":
+        with open(file_all_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "12AM-3AM":
+        with open(file_12am_3am_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "4AM-7AM":
+        with open(file_4am_7am_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "8AM-11AM":
+        with open(file_8am_11am_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "950 meters" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_950meters, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "12AM-11PM":
+        with open(file_all_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "12AM-3AM":
+        with open(file_12am_3am_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "4AM-7AM":
+        with open(file_4am_7am_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "8AM-11AM":
+        with open(file_8am_11am_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 kilometer" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_1kilometer, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "12AM-11PM":
+        with open(file_all_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "12AM-3AM":
+        with open(file_12am_3am_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "4AM-7AM":
+        with open(file_4am_7am_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "8AM-11AM":
+        with open(file_8am_11am_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "12PM-3PM":
+        with open(file_12pm_3pm_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "4PM-7PM":
+        with open(file_4pm_7pm_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
+    elif grid == "1 mile" and interval == "8PM-11PM":
+        with open(file_8pm_11pm_1mile, 'r') as file:
+            datajson = json.load(file)
+        appended_list = datajson.get("appended_list", [])
+        return appended_list
 
 def coord_lister(geom):
     coords = list(geom.exterior.coords)
     return (coords)
-
 
 def get_radius(radius, unit):
     radius = float(radius)
@@ -852,7 +1076,7 @@ def get_data(response, filename):
         "new_neighborhood_list": new_neighborhood_list
     }
 
-    file_name = os.path.join(PROJECT_DIR, "data","static", "histogram", filename + ".json")
+    file_name = os.path.join(PROJECT_DIR, "static", "data", "histogram", filename + ".json")
 
     # Write JSON data to a file
     if datajson:
@@ -1010,8 +1234,23 @@ def success(safe, work, current, destination, interval, gridsize):
         unit = gridsplit[1]
 
         print("gridsize", gridsize)
-        selected_grid = switch_grids(gridsize, interval)
+        selected_grid = switch_grids2(gridsize, interval)
         print("selected_grid", selected_grid)
+
+        # file_name = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700metersAll.json')
+        #
+        # try:
+        #     # Open and read the JSON file
+        #     with open(file_name, 'r') as file:
+        #         datajson = json.load(file)
+        #
+        #     # Access the appended_list
+        #     appended_list = datajson.get("appended_list", [])
+        #     return jsonify({"appended_list": appended_list})
+        # except FileNotFoundError:
+        #     return jsonify({"error": "File not found"}), 404
+        # except json.JSONDecodeError:
+        #     return jsonify({"error": "Error decoding JSON"}), 400
 
         user.interval = interval
         user.radius = radius
