@@ -501,9 +501,11 @@
               .attr("width", x.bandwidth() )
               .attr("height", y.bandwidth() )
               .style("fill", function(d) { return myColor(d.countlist)} )
-            .on("mouseover", mouseover)
-            .on("mousemove", mousemove)
-            .on("mouseleave", mouseleave)
+              .style("stroke", "black")          // Add border color
+              .style("stroke-width", "1px")      // Add border thickness
+              .on("mouseover", mouseover)
+              .on("mousemove", mousemove)
+              .on("mouseleave", mouseleave)
 
         }).catch(function(error) {
             // Handle any errors that occur during the loading process

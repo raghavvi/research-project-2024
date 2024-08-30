@@ -12,7 +12,6 @@ import os
 from models import db, CustomJSONEncoder, IntervalOne, IntervalTwo, \
     IntervalThree, IntervalFour, IntervalFive, IntervalSix
 from models import Model
-from griddata import gridcounts
 import pandas as pd
 
 load_dotenv()
@@ -214,285 +213,509 @@ def switch_grids2(grid, interval):
     file_8pm_11pm_1mile = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '1mile8PM-11PM.json')
 
     if grid == "700 meters" and interval == "12AM-11PM":
-        with open(file_all_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "700 meters" and interval == "12AM-3AM":
-        with open(file_12am_3am_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "700 meters" and interval == "4AM-7AM":
-        with open(file_4am_7am_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "700 meters" and interval == "8AM-11AM":
-        with open(file_8am_11am_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "700 meters" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "700 meters" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ", grid, interval)
+            return None
     elif grid == "700 meters" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_700meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_700meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "12AM-11PM":
-        with open(file_all_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "12AM-3AM":
-        with open(file_12am_3am_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "4AM-7AM":
-        with open(file_4am_7am_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "8AM-11AM":
-        with open(file_8am_11am_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "750 meters" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_750meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_750meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "12AM-11PM":
-        with open(file_all_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "12AM-3AM":
-        with open(file_12am_3am_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "4AM-7AM":
-        with open(file_4am_7am_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "8AM-11AM":
-        with open(file_8am_11am_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "800 meters" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_800meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_800meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "12AM-11PM":
-        with open(file_all_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "12AM-3AM":
-        with open(file_12am_3am_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "4AM-7AM":
-        with open(file_4am_7am_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "8AM-11AM":
-        with open(file_8am_11am_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "850 meters" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_850meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_850meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "12AM-11PM":
-        with open(file_all_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "12AM-3AM":
-        with open(file_12am_3am_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "4AM-7AM":
-        with open(file_4am_7am_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "8AM-11AM":
-        with open(file_8am_11am_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "900 meters" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_900meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_900meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "12AM-11PM":
-        with open(file_all_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "12AM-3AM":
-        with open(file_12am_3am_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "4AM-7AM":
-        with open(file_4am_7am_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "8AM-11AM":
-        with open(file_8am_11am_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "950 meters" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_950meters, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_950meters, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "12AM-11PM":
-        with open(file_all_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "12AM-3AM":
-        with open(file_12am_3am_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "4AM-7AM":
-        with open(file_4am_7am_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "8AM-11AM":
-        with open(file_8am_11am_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 kilometer" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_1kilometer, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_1kilometer, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "12AM-11PM":
-        with open(file_all_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_all_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "12AM-3AM":
-        with open(file_12am_3am_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12am_3am_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "4AM-7AM":
-        with open(file_4am_7am_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4am_7am_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "8AM-11AM":
-        with open(file_8am_11am_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8am_11am_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "12PM-3PM":
-        with open(file_12pm_3pm_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_12pm_3pm_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "4PM-7PM":
-        with open(file_4pm_7pm_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_4pm_7pm_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
     elif grid == "1 mile" and interval == "8PM-11PM":
-        with open(file_8pm_11pm_1mile, 'r') as file:
-            datajson = json.load(file)
-        appended_list = datajson.get("appended_list", [])
-        return appended_list
+        try:
+            with open(file_8pm_11pm_1mile, 'r') as file:
+                datajson = json.load(file)
+            appended_list = datajson.get("appended_list", [])
+            return appended_list
+        except FileNotFoundError:
+            print("No file found: ",grid, interval)
+            return None
 
 def coord_lister(geom):
     coords = list(geom.exterior.coords)
@@ -608,36 +831,49 @@ def search_within_polygon_histogram(sublistelement, interval):
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
             return len(polygon_result_list)
+        else:
+            return 0
     elif interval == "4AM-7AM":
         result = IntervalTwo.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
+        print("polygon_result_list", polygon_result_list)
         if len(polygon_result_list) != 0:
-            print("polygon_result_list", len(polygon_result_list))
+            print("len_polygon_result_list", len(polygon_result_list))
             return len(polygon_result_list)
+        else:
+            return 0
     elif interval == "8AM-11AM":
         result = IntervalThree.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
             return len(polygon_result_list)
+        else:
+            return 0
     elif interval == "12PM-3PM":
         result = IntervalFour.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
             return len(polygon_result_list)
+        else:
+            return 0
     elif interval == "4PM-7PM":
         result = IntervalFive.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
             return len(polygon_result_list)
+        else:
+            return 0
     elif interval == "8PM-11PM":
         result = IntervalSix.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
             return len(polygon_result_list)
+        else:
+            return 0
     else:
         # All intervals
         result = Model.objects.aggregate(*polygon_pipeline)
@@ -1091,11 +1327,11 @@ def get_data(response, filename):
 @app.route('/createnewgrids')
 def create_new_grids():
     # call create_grids(element)
-    # element is tuple
+    # element is tuplecle
     # return response files created
 
-    create_grids((700, "meters", "All"))
-    # create_grids((700, "meters", "12AM-3AM"))
+    # create_grids((700, "meters", "All"))
+    create_grids((700, "meters", "12AM-3AM"))
     # create_grids((700, "meters", "4AM-7AM"))
     # create_grids((700, "meters", "8AM-11AM"))
     # create_grids((700, "meters", "12PM-3PM"))
@@ -1156,8 +1392,6 @@ def create_new_grids():
 
 def create_grids(element):
     polygon_list = []
-
-    # element = (850, "meters", "All")
 
     file_name = str(element[0]) + element[1] + element[2]
 
