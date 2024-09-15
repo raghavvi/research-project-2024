@@ -73,6 +73,15 @@
             background-color: #6a696b;
         }
 
+        .gauge {
+            font-family: sans-serif;
+            width: 300px;
+            height: 200px;
+        }
+        .gauge .needle {
+            stroke: #000;
+            stroke-width: 2px;
+        }
 
         .container {
             position: relative;
@@ -160,6 +169,53 @@
             100% { transform: rotate(360deg); }
         }
 
+<!--     highcharts gauge-->
+
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 310px;
+            max-width: 500px;
+            margin: 1em auto;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #ebebeb;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table thead tr,
+        .highcharts-data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .highcharts-data-table tr:hover {
+            background: #f1f7ff;
+}
+
+
+
     </style>
 
     <script src="https://d3js.org/d3.v6.js"></script>
@@ -198,7 +254,10 @@
         </div>
 
         <div id="menu3" class="tab-pane fade">
-            Dial Container
+
+            <div id="container" style="height: 300px;">
+            </div>
+
         </div>
     </div>
 
@@ -515,143 +574,79 @@
     }
 
 
-    function addHeatmap2() {
+function createGauge() {
+        Highcharts.chart('container', {
 
-        let safePath = "/static/data/heatmap/heatmap_data_safe.csv";
-        let workPath = "/static/data/heatmap/heatmap_data_work.csv";
-        let currentPath = "/static/data/heatmap/heatmap_data_current.csv";
-        let destinationPath = "/static/data/heatmap/heatmap_data_destination.csv";
+        chart: {
+            type: 'gauge',
+            plotBackgroundColor: null,
+            plotBackgroundImage: null,
+            plotBorderWidth: 0,
+            plotShadow: false,
+            height: '80%'
+        },
 
-        document.getElementById("heatmap-dropdown").addEventListener("change", function() {
-            let dropDownReturnValue = val();
-            console.log("dropDownReturnValue", dropDownReturnValue);
-        });
+        title: {
+            text: 'Gauge for Crime Score'
+        },
 
-        // set the dimensions and margins of the graph
-        const margin = {top: 30, right: 30, bottom: 30, left: 30},
-          width = 280 - margin.left - margin.right,
-          height = 140 - margin.top - margin.bottom;
+        pane: {
+            startAngle: -90,
+            endAngle: 89.9,
+            background: null,
+            center: ['50%', '75%'],
+            size: '110%'
+        },
 
-        // append the svg object to the body of the page
-        const svg = d3.select("#heatmap")
-        .append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-          .attr("transform", `translate(${margin.left},${margin.top})`);
+        // the value axis
+        yAxis: {
+            min: 0,
+            max: 20,
+            tickPixelInterval: 72,
+            tickPosition: 'inside',
+            tickColor: Highcharts.defaultOptions.chart.backgroundColor || '#FFFFFF',
+            tickLength: 20,
+            tickWidth: 2,
+            minorTickInterval: null,
+            labels: {
+                distance: 20,
+                style: {
+                    fontSize: '14px'
+                }
+            },
+            lineWidth: 0,
+            plotBands: [{
+                from: 0,
+                to: 5,
+                color: '#55BF3B', // green
+                thickness: 20
+            }, {
+                from: 5,
+                to: 9,
+                color: '#DDDF0D', // yellow
+                thickness: 20
+            }, {
+                from: 9,
+                to: 20,
+                color: '#DF5353', // red
+                thickness: 20
+            }]
+        },
 
-        // Labels of row and columns
-        const myGroups = ["A", "B", "C", "D", "E"]
-        const myVars = ["v1", "v2", "v3", "v4", "v5"]
+        series: [{
+            name: 'CrimeScore',
+            data: [5]
+        }]
 
-        // Build X scales and axis:
-        const x = d3.scaleBand()
-          .range([ 0, width ])
-          .domain(myGroups)
-          .padding(0.01);
-        svg.append("g")
-          .attr("transform", `translate(0, ${height})`)
-          .call(d3.axisBottom(x))
+    });
 
-        // Build X scales and axis:
-        const y = d3.scaleBand()
-          .range([ height, 0 ])
-          .domain(myVars)
-          .padding(0.01);
-        svg.append("g")
-          .call(d3.axisLeft(y));
+}
 
-        // Add X axis label:
-        svg.append("text")
-            .attr("text-anchor", "end")
-            .attr("font-size", "10px")
-            .attr("x", width)
-            .attr("y", height + margin.top)
-            .text("X axis title");
 
-        // Y axis label:
-        svg.append("text")
-            .attr("text-anchor", "end")
-            .attr("font-size", "10px")
-            .attr("transform", "rotate(-90)")
-            .attr("y", -margin.left+ 5)
-            .attr("x", -margin.top + 5)
-            .text("Y axis title")
-
-          svg.append("text")
-            .attr("x", (width / 2))
-            .attr("y", 0 - (margin.top / 2))
-            .attr("text-anchor", "middle")
-            .style("font-size", "16px")
-            .style("text-decoration", "underline")
-            .text("Heatmap");
-
-        // Build color scale
-        const myColor = d3.scaleLinear()
-          .range(["white", "#69b3a2"])
-          .domain([1,100])
-
-        // Load the CSV file
-        d3.csv(safePath).then(function(data) {
-            // This code runs after the CSV file has been loaded
-            console.log(data);
-
-            // Example: Process the CSV data
-            data.forEach(function(d) {
-                d.countlist = +d.countlist; // Convert a column to a number
-            });
-
-           // create a tooltip
-          const tooltip = d3.select("#heatmap")
-            .append("div")
-            .style("opacity", 0)
-            .attr("class", "tooltip")
-            .style("background-color", "#466c9e")
-            .style("border-radius", "5px")
-            .style("width", "55px")
-            .style("height", "15px")
-            .style("font-size", ".575rem")
-            .style("text-align", "center")
-            .style("line-height", "15px")
-            .style("color", "#fff");
-
-          // Three function that change the tooltip when user hover / move / leave a cell
-          const mouseover = function(event,d) {
-            tooltip.style("opacity", 1)
-          }
-          const mousemove = function(event,d) {
-            tooltip
-              .html(d.countlist)
-              .style("left", (event.x)/2 + "px")
-              .style("top", (event.y)/2 + "px")
-          }
-          const mouseleave = function(d) {
-            tooltip.style("opacity", 0)
-          }
-
-          // add the squares
-          svg.selectAll()
-            .data(data, function(d) {return d.rows+':'+d.cols;})
-            .enter()
-            .append("rect")
-              .attr("x", function(d) { return x(d.rows) })
-              .attr("y", function(d) { return y(d.cols) })
-              .attr("width", x.bandwidth() )
-              .attr("height", y.bandwidth() )
-              .style("fill", function(d) { return myColor(d.countlist)} )
-            .on("mouseover", mouseover)
-            .on("mousemove", mousemove)
-            .on("mouseleave", mouseleave)
-
-        }).catch(function(error) {
-            // Handle any errors that occur during the loading process
-            console.error('Error loading the CSV file:', error);
-        });
-
-    }
 
     addHistogram()
     callHeatmap()
+    createGauge()
 
 </script>
 
