@@ -244,9 +244,9 @@
         <div id="menu2" class="tab-pane fade">
             <div class="heatmap-dropdown">
                 <select name="heatmap-dropdown" onchange="val()" id="heatmap-dropdown">
+                    <option value="current">current</option>
                     <option value="safe">safe</option>
                     <option value="work">work</option>
-                    <option value="current">current</option>
                     <option value="destination">destination</option>
                 </select>
             </div>
@@ -444,6 +444,13 @@
             console.log("dropDownReturnValue", dropDownReturnValue);
             addHeatmap(dropDownReturnValue);
         });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            d3.select("#heatmap").selectAll("*").remove();
+            let defaultValue = "/static/data/heatmap/heatmap_data_current.csv";
+            addHeatmap(defaultValue);
+        });
+
     }
 
     function addHeatmap(dropDownReturnValue) {
