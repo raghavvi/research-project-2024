@@ -1129,7 +1129,6 @@ def create_grid_heatmap_new(distance, latitude, longitude):
 
 
 def create_heatmap_polygon(distance, point):
-    print("test create_heatmap")
     grid = create_grid_heatmap_new(distance, point[1][0], point[1][1])
     grid_geojson = grid.to_json()
     grid_geojson_parsed = json.loads(grid_geojson)
@@ -1452,16 +1451,16 @@ def success(safe, work, current, destination, interval, gridsize):
         destinationlocation = geolocator.geocode(destination)
         user = UserData()
         user.add_safe_coordinates(safelocation.latitude, safelocation.longitude)
-        print(user.safecoordinates)
+        print("safecoordinates", user.safecoordinates)
 
         user.add_work_coordinates(worklocation.latitude, worklocation.longitude)
-        print(user.workcoordinates)
+        print("workcoordinates", user.workcoordinates)
 
         user.add_current_coordinates(currentlocation.latitude, currentlocation.longitude)
-        print(user.currentcoordinates)
+        print("currentcoordinates",user.currentcoordinates)
 
         user.add_destination_coordinates(destinationlocation.latitude, destinationlocation.longitude)
-        print(user.destinationcoordinates)
+        print("destinationcoordinates",user.destinationcoordinates)
 
         gridsplit = gridsize.split()
         radius = gridsplit[0]
@@ -1562,8 +1561,17 @@ def success(safe, work, current, destination, interval, gridsize):
         df_current.to_csv('static/data/heatmap/heatmap_data_current.csv', index=False)
         df_destination.to_csv('static/data/heatmap/heatmap_data_destination.csv', index=False)
 
-        return render_template('success.html', key=key, grid=user.grid, safe=countsafe, work=countwork,
-                               current=countcurrent, destination=countdestination)
+        return render_template('success.html', key=key, grid=user.grid, radius=user.radius,
+                               safe=countsafe, work=countwork,
+                               current=countcurrent, destination=countdestination,
+                               latsafecoordinate=user.safecoordinates[1],
+                               lonsafecoordinate=user.safecoordinates[0],
+                               latcurrentcoordinate=user.currentcoordinates[1],
+                               loncurrentcoordinate=user.currentcoordinates[0],
+                               latworkcoordinate=user.workcoordinates[1],
+                               lonworkcoordinate=user.workcoordinates[0],
+                               latdestinationcoordinate=user.destinationcoordinates[1],
+                               londestinationcoordinate=user.destinationcoordinates[0])
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
 
