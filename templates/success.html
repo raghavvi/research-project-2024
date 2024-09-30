@@ -783,7 +783,6 @@
           const mouseleave = function(d) {
             tooltip.style("opacity", 0)
           }
-
           // add the squares
           svg.selectAll()
             .data(data, function(d) {return d.rows+':'+d.cols;})
@@ -886,7 +885,6 @@ function createGauge() {
 
 <script>
 
-// locations[item].radius
 
      var latsafecoordinate = parseFloat("{{latsafecoordinate}}");
      var lonsafecoordinate = parseFloat("{{lonsafecoordinate}}");
@@ -897,26 +895,36 @@ function createGauge() {
      var latdestinationcoordinate = parseFloat("{{latdestinationcoordinate}}");
      var londestinationcoordinate = parseFloat("{{londestinationcoordinate}}");
      var radius = parseFloat("{{radius}}");
-
-     console.log("radius", radius);
+     var current = parseFloat("{{current}}");
+     var safe = parseFloat("{{safe}}");
+     var work = parseFloat("{{work}}");
+     var destination = parseFloat("{{destination}}");
 
     // pass coordinates submitted by form
     const locations = {
       current: {
         center: { lat: latcurrentcoordinate, lng: loncurrentcoordinate },
         radius: radius,
+        color: "#FFC0CB",
+        title: "Current Location: " + current.toString()
       },
       safe: {
         center: { lat: latsafecoordinate, lng: lonsafecoordinate },
         radius: radius,
+        color: "#13D27E",
+        title: "Safe Location: " + safe.toString()
       },
       work: {
         center: { lat: latworkcoordinate, lng: lonworkcoordinate },
         radius: radius,
+        color: "#3549EB",
+        title: "Work Location: " + work.toString()
       },
       destination: {
         center: { lat: latdestinationcoordinate, lng: londestinationcoordinate},
         radius: radius,
+        color: "#8D70E0",
+        title: "Destination Location: " + destination.toString()
       },
     };
 
@@ -930,23 +938,25 @@ function createGauge() {
 
         var map = new google.maps.Map(document.getElementById("map"),mapProp);
 
-
-        // set circle markers on map with label - based on location
-        // example radius 700m
         for (const item in locations) {
              const set_radius = new google.maps.Circle({
-                strokeColor: "#FF0000",
+                strokeColor: locations[item].color,
                 strokeOpacity: 0.8,
                 strokeWeight: 2,
-                fillColor: "#FF0000",
+                fillColor: locations[item].color,
                 fillOpacity: 0.35,
                 map,
                 center: locations[item].center,
-                radius: locations[item].radius
+                radius: locations[item].radius,
+                title: locations[item].title
             });
+
+            google.maps.event.addListener(set_radius,'mouseover',function(){
+                 this.getMap().getDiv().setAttribute('title',this.get('title'));});
+
+            google.maps.event.addListener(set_radius,'mouseout',function(){
+                 this.getMap().getDiv().removeAttribute('title');});
         }
-
-
     }
 
 
