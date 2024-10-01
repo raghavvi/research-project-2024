@@ -653,7 +653,7 @@
             // console.log("safePath", safePath);
             return safePath;
         } else if (dropdownValue == "work") {
-            // console.log("workPath", workPath);
+            console.log("workPath", workPath);
             return workPath;
         } else if (dropdownValue == "current") {
             // console.log("currentPath", currentPath);
@@ -679,6 +679,45 @@
         });
 
     }
+
+
+      function setHeatMapLabels(dropDownReturnValue) {
+           // pass dropDownReturnValue to tooltip to return string and color in array
+
+           let currentLocationArray = [];
+           let safeLocationArray = [];
+           let workLocationArray = [];
+           let destinationLocationArray = [];
+           let locationStr = "";
+           let locationColor = "";
+
+           if (dropDownReturnValue.toString() === "/static/data/heatmap/heatmap_data_current.csv"){
+               locationStr = "Current Center";
+               locationColor = "#FFC0CB";
+               currentLocationArray.push(locationStr);
+               currentLocationArray.push(locationColor);
+               return currentLocationArray;
+           } else if (dropDownReturnValue.toString() === "/static/data/heatmap/heatmap_data_safe.csv"){
+               locationStr = "Safe Center";
+               locationColor = "#13D27E";
+               safeLocationArray.push(locationStr);
+               safeLocationArray.push(locationColor);
+               return safeLocationArray;
+           } else if (dropDownReturnValue.toString() === "/static/data/heatmap/heatmap_data_work.csv"){
+               locationStr = "Work Center";
+               locationColor = "#3549EB";
+               workLocationArray.push(locationStr);
+               workLocationArray.push(locationColor);
+               return workLocationArray;
+           } else if (dropDownReturnValue.toString() === "/static/data/heatmap/heatmap_data_destination.csv"){
+               locationStr = "Destination Center";
+               locationColor = "#8D70E0";
+               destinationLocationArray.push(locationStr);
+               destinationLocationArray.push(locationColor);
+               return destinationLocationArray;
+           }
+       }
+
 
     function addHeatmap(dropDownReturnValue) {
 
@@ -749,7 +788,8 @@
         // Load the CSV file
         d3.csv(dropDownReturnValue).then(function(data) {
             // This code runs after the CSV file has been loaded
-            console.log(data);
+            console.log("file",dropDownReturnValue);
+            console.log("data",data);
 
             // Example: Process the CSV data
             data.forEach(function(d) {
@@ -774,12 +814,25 @@
           const mouseover = function(event,d) {
             tooltip.style("opacity", 1)
           }
+
+          locationArray = setHeatMapLabels(dropDownReturnValue)
+          let locationStr = locationArray[0].toString();
+
           const mousemove = function(event,d) {
+            let tooltipContent = '';
+
+               if (d.centerlist === "True") {
+                tooltipContent = `Count: ${d.countlist}`;
+              } else {
+                tooltipContent = `Count: ${d.countlist}`;
+              }
+
             tooltip
-              .html(d.countlist)
+              .html(tooltipContent)
               .style("left", (event.x)/2 + "px")
               .style("top", (event.y)/2 + "px")
           }
+
           const mouseleave = function(d) {
             tooltip.style("opacity", 0)
           }
@@ -792,7 +845,13 @@
               .attr("y", function(d) { return y(d.cols) })
               .attr("width", x.bandwidth() )
               .attr("height", y.bandwidth() )
-              .style("fill", function(d) { return myColor(d.countlist)} )
+              .style("fill", function(d) {
+                  if (d.centerlist === "True"){
+                      return locationArray[1];
+                  } else {
+                      return myColor(d.countlist);
+                  }
+                })
               .style("stroke", "black")          // Add border color
               .style("stroke-width", "1px")      // Add border thickness
               .on("mouseover", mouseover)
