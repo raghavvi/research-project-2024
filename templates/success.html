@@ -513,10 +513,6 @@
        console.log("Histogram function");
 
         var grid = "{{grid}}";
-        var safe = "{{safe}}";
-        var work = "{{work}}";
-        var current = "{{current}}";
-        var destination = "{{destination}}";
 
        console.log("grid", grid);
 
@@ -944,7 +940,6 @@ function createGauge() {
 
 <script>
 
-
      var latsafecoordinate = parseFloat("{{latsafecoordinate}}");
      var lonsafecoordinate = parseFloat("{{lonsafecoordinate}}");
      var latcurrentcoordinate = parseFloat("{{latcurrentcoordinate}}");
@@ -954,10 +949,11 @@ function createGauge() {
      var latdestinationcoordinate = parseFloat("{{latdestinationcoordinate}}");
      var londestinationcoordinate = parseFloat("{{londestinationcoordinate}}");
      var radius = parseFloat("{{radius}}");
-     var current = parseFloat("{{current}}");
-     var safe = parseFloat("{{safe}}");
-     var work = parseFloat("{{work}}");
-     var destination = parseFloat("{{destination}}");
+
+     var middle_element_current_count = parseFloat("{{middle_element_current_count}}");
+     var middle_element_safe_count = parseFloat("{{middle_element_safe_count}}");
+     var middle_element_work_count = parseFloat("{{middle_element_work_count}}");
+     var middle_element_destination_count = parseFloat("{{middle_element_destination_count}}");
 
     // pass coordinates submitted by form
     const locations = {
@@ -965,25 +961,25 @@ function createGauge() {
         center: { lat: latcurrentcoordinate, lng: loncurrentcoordinate },
         radius: radius,
         color: "#FFC0CB",
-        title: "Current Location: " + current.toString()
+        title: "Current Location: " + middle_element_current_count.toString()
       },
       safe: {
         center: { lat: latsafecoordinate, lng: lonsafecoordinate },
         radius: radius,
         color: "#13D27E",
-        title: "Safe Location: " + safe.toString()
+        title: "Safe Location: " + middle_element_safe_count.toString()
       },
       work: {
         center: { lat: latworkcoordinate, lng: lonworkcoordinate },
         radius: radius,
         color: "#3549EB",
-        title: "Work Location: " + work.toString()
+        title: "Work Location: " + middle_element_work_count.toString()
       },
       destination: {
         center: { lat: latdestinationcoordinate, lng: londestinationcoordinate},
         radius: radius,
         color: "#8D70E0",
-        title: "Destination Location: " + destination.toString()
+        title: "Destination Location: " + middle_element_destination_count.toString()
       },
     };
 

@@ -1496,12 +1496,14 @@ def success(safe, work, current, destination, interval, gridsize):
 
         meters = get_meters(user.radius, user.units)
 
+        #Will comment out block
         countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, meters)
         countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, meters)
         countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, meters)
         countdestination = get_crimecounts_forlocation(user.destinationcoordinates, filtered_data_list, meters)
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination",
               countdestination)
+        #
 
         safepolygon = create_heatmap_polygon(meters, safelocation)
         workpolygon = create_heatmap_polygon(meters, worklocation)
@@ -1516,18 +1518,27 @@ def success(safe, work, current, destination, interval, gridsize):
         middle_index = get_middle_element_of_count_list(safe_count_list)
         conditional_safe_center_point_list = [True if index == middle_index else
                                               False for index, num in enumerate(safe_count_list)]
+        middle_element_safe_count = safe_count_list[middle_index]
+        print("middle_element_safe_count", middle_element_safe_count)
 
         middle_index = get_middle_element_of_count_list(work_count_list)
         conditional_work_center_point_list = [True if index == middle_index else
                                               False for index, num in enumerate(work_count_list)]
+        middle_element_work_count = work_count_list[middle_index]
+        print("middle_element_work_count",middle_element_work_count)
 
         middle_index = get_middle_element_of_count_list(current_count_list)
         conditional_current_center_point_list = [True if index == middle_index else
                                                  False for index, num in enumerate(current_count_list)]
+        middle_element_current_count = current_count_list[middle_index]
+        print("middle_element_current_count",middle_element_current_count)
 
         middle_index = get_middle_element_of_count_list(destination_count_list)
         conditional_destination_center_point_list = [True if index == middle_index else
                                                      False for index, num in enumerate(destination_count_list)]
+        middle_element_destination_count = destination_count_list[middle_index]
+        print("middle_element_destination_count",middle_element_destination_count)
+
 
         print("conditional_safe_center_point_list", conditional_safe_center_point_list)
 
@@ -1562,8 +1573,6 @@ def success(safe, work, current, destination, interval, gridsize):
         df_destination.to_csv('static/data/heatmap/heatmap_data_destination.csv', index=False)
 
         return render_template('success.html', key=key, grid=user.grid, radius=user.radius,
-                               safe=countsafe, work=countwork,
-                               current=countcurrent, destination=countdestination,
                                latsafecoordinate=user.safecoordinates[1],
                                lonsafecoordinate=user.safecoordinates[0],
                                latcurrentcoordinate=user.currentcoordinates[1],
@@ -1571,7 +1580,12 @@ def success(safe, work, current, destination, interval, gridsize):
                                latworkcoordinate=user.workcoordinates[1],
                                lonworkcoordinate=user.workcoordinates[0],
                                latdestinationcoordinate=user.destinationcoordinates[1],
-                               londestinationcoordinate=user.destinationcoordinates[0])
+                               londestinationcoordinate=user.destinationcoordinates[0],
+                               middle_element_safe_count=middle_element_safe_count,
+                               middle_element_current_count=middle_element_current_count,
+                               middle_element_work_count=middle_element_work_count,
+                               middle_element_destination_count=middle_element_destination_count
+                               )
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
 
