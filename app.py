@@ -1,4 +1,6 @@
 import json
+import math
+
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
 from shapely.geometry import box
@@ -1090,6 +1092,22 @@ def create_grid(cell_size_meters):
     return grid_gdf
 
 
+def create_bounding_box(latitude, longitude, distance):
+
+    deg_per_meter_lat = 1 / 111320  # Approx. 1 degree latitude = 111.32 km
+    lat_diff = distance * deg_per_meter_lat
+
+    deg_per_meter_lon = 1 / (111320 * math.cos(math.radians(latitude)))
+    lon_diff = distance * deg_per_meter_lon
+
+    return {
+        "west": longitude - lon_diff,
+        "east": longitude + lon_diff,
+        "south": latitude - lat_diff,
+        "north": latitude + lat_diff
+    }
+
+
 def create_grid_heatmap_new(distance, latitude, longitude):
     print("latitude", latitude)
     print("longitude", longitude)
@@ -1539,8 +1557,17 @@ def success(safe, work, current, destination, interval, gridsize):
         middle_element_destination_count = destination_count_list[middle_index]
         print("middle_element_destination_count",middle_element_destination_count)
 
-
         print("conditional_safe_center_point_list", conditional_safe_center_point_list)
+
+        bounding_box_safe = create_bounding_box(user.safecoordinates[1], user.safecoordinates[0], meters)
+        bounding_box_current = create_bounding_box(user.currentcoordinates[1], user.currentcoordinates[0], meters)
+        bounding_box_work = create_bounding_box(user.workcoordinates[1], user.workcoordinates[0], meters)
+        bounding_box_destination = create_bounding_box(user.destinationcoordinates[1], user.destinationcoordinates[0], meters)
+
+        print("bounding_box_safe",bounding_box_safe)
+        print("bounding_box_current",bounding_box_current)
+        print("bounding_box_work",bounding_box_work)
+        print("bounding_box_destination",bounding_box_destination)
 
         rows_list = ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "C", "C", "C", "C", "C", "D", "D", "D", "D", "D",
                      "E", "E", "E", "E", "E"]
@@ -1584,7 +1611,11 @@ def success(safe, work, current, destination, interval, gridsize):
                                middle_element_safe_count=middle_element_safe_count,
                                middle_element_current_count=middle_element_current_count,
                                middle_element_work_count=middle_element_work_count,
-                               middle_element_destination_count=middle_element_destination_count
+                               middle_element_destination_count=middle_element_destination_count,
+                               bounding_box_safe=bounding_box_safe,
+                               bounding_box_current=bounding_box_current,
+                               bounding_box_work=bounding_box_work,
+                               bounding_box_destination=bounding_box_destination
                                )
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
