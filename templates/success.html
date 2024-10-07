@@ -1117,6 +1117,57 @@ function createGauge() {
 
            google.maps.event.addListener(rectangle4,'mouseout',function(){
                 this.getMap().getDiv().removeAttribute('title');});
+
+
+          document.getElementById("location").addEventListener("change", function() {
+                var selectedValue = this.value;
+                console.log("selectedValue", selectedValue);
+
+                if (selectedValue === "current") {
+                    var latLng = {
+                        lat: latcurrentcoordinate,
+                        lng: loncurrentcoordinate
+                    };
+
+                    // Zoom into the selected coordinates
+                    map.setCenter(latLng);
+                    map.setZoom(14.5); // Adjust the zoom level as necessary
+                }
+
+                else if (selectedValue === "safe") {
+                    var latLng = {
+                        lat: latsafecoordinate,
+                        lng: lonsafecoordinate
+                    };
+
+                    // Zoom into the selected coordinates
+                    map.setCenter(latLng);
+                    map.setZoom(14.5); // Adjust the zoom level as necessary
+                }
+
+                else if (selectedValue === "work") {
+                    var latLng = {
+                        lat: latworkcoordinate,
+                        lng: lonworkcoordinate
+                    };
+
+                    // Zoom into the selected coordinates
+                    map.setCenter(latLng);
+                    map.setZoom(14.5); // Adjust the zoom level as necessary
+                }
+
+                else if (selectedValue === "destination") {
+                    var latLng = {
+                        lat: latdestinationcoordinate,
+                        lng: londestinationcoordinate
+                    };
+
+                    // Zoom into the selected coordinates
+                    map.setCenter(latLng);
+                    map.setZoom(14.5); // Adjust the zoom level as necessary
+                }
+
+          });
     }
 
 
