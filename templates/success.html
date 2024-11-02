@@ -716,6 +716,8 @@
 
 
     function addHeatmap(dropDownReturnValue) {
+        var maxGridElement = parseFloat("{{maxgridelement}}");
+        console.log("maxGridElement", maxGridElement);
 
         // set the dimensions and margins of the graph
         const margin = {top: 30, right: 30, bottom: 30, left: 30},
@@ -779,7 +781,7 @@
         // Build color scale
         const myColor = d3.scaleLinear()
           .range(["white", "#69b3a2"])
-          .domain([1,100])
+          .domain([1,maxGridElement])
 
         // Load the CSV file
         d3.csv(dropDownReturnValue).then(function(data) {
@@ -863,6 +865,27 @@
 
 
 function createGauge() {
+
+        var firstIntervalOne = parseFloat("{{intervalOne[0]}}");
+        var lastIntervalOne = parseFloat("{{intervalOne[-1]}}");
+        var firstIntervalTwo = parseFloat("{{intervalTwo[0]}}");
+        var lastIntervalTwo = parseFloat("{{intervalTwo[-1]}}");
+        var firstIntervalThree = parseFloat("{{intervalThree[0]}}");
+        var lastIntervalThree = parseFloat("{{intervalThree[-1]}}");
+        var middle_element_current_count = parseFloat("{{middle_element_current_count}}");
+        var middle_element_safe_count = parseFloat("{{middle_element_safe_count}}");
+        var middle_element_work_count = parseFloat("{{middle_element_work_count}}");
+        var middle_element_destination_count = parseFloat("{{middle_element_destination_count}}");
+
+        console.log("firstIntervalOne", firstIntervalOne);
+        console.log("lastIntervalOne", lastIntervalOne);
+
+        console.log("firstIntervalTwo", firstIntervalTwo);
+        console.log("lastIntervalTwo", lastIntervalTwo);
+
+        console.log("firstIntervalThree", firstIntervalThree);
+        console.log("lastIntervalThree", lastIntervalThree);
+
         Highcharts.chart('container', {
 
         chart: {
@@ -889,7 +912,7 @@ function createGauge() {
         // the value axis
         yAxis: {
             min: 0,
-            max: 20,
+            max: lastIntervalThree,
             tickPixelInterval: 72,
             tickPosition: 'inside',
             tickColor: Highcharts.defaultOptions.chart.backgroundColor || '#FFFFFF',
@@ -897,33 +920,33 @@ function createGauge() {
             tickWidth: 2,
             minorTickInterval: null,
             labels: {
-                distance: 20,
+                distance: lastIntervalThree,
                 style: {
                     fontSize: '14px'
                 }
             },
             lineWidth: 0,
             plotBands: [{
-                from: 0,
-                to: 5,
+                from: firstIntervalOne,
+                to: lastIntervalOne,
                 color: '#55BF3B', // green
                 thickness: 20
             }, {
-                from: 5,
-                to: 9,
+                from: lastIntervalOne,
+                to: firstIntervalThree,
                 color: '#DDDF0D', // yellow
                 thickness: 20
             }, {
-                from: 9,
-                to: 20,
+                from: firstIntervalThree,
+                to: lastIntervalThree,
                 color: '#DF5353', // red
                 thickness: 20
             }]
         },
 
         series: [{
-            name: 'CrimeScore',
-            data: [5]
+            name: 'Current',
+            data: [middle_element_current_count]
         }]
 
     });

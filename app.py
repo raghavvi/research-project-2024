@@ -15,6 +15,7 @@ from models import db, CustomJSONEncoder, IntervalOne, IntervalTwo, \
     IntervalThree, IntervalFour, IntervalFive, IntervalSix
 from models import Model
 import pandas as pd
+import numpy as np
 
 load_dotenv()
 
@@ -831,9 +832,13 @@ def search_within_polygon_histogram(sublistelement, interval):
         result = IntervalOne.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
+            print("foundsublist",sublistelement)
             print("polygon_result_list", len(polygon_result_list))
-            return len(polygon_result_list)
+            return polygon_result_list
         else:
+            print("notfoundsublistelement",sublistelement)
+            with open("not_found_sublist_elements.txt", "a") as file:
+                file.write(f"notfoundsublistelement: {sublistelement}\n")
             return 0
     elif interval == "4AM-7AM":
         result = IntervalTwo.objects.aggregate(*polygon_pipeline)
@@ -841,7 +846,7 @@ def search_within_polygon_histogram(sublistelement, interval):
         print("polygon_result_list", polygon_result_list)
         if len(polygon_result_list) != 0:
             print("len_polygon_result_list", len(polygon_result_list))
-            return len(polygon_result_list)
+            return polygon_result_list
         else:
             return 0
     elif interval == "8AM-11AM":
@@ -849,7 +854,7 @@ def search_within_polygon_histogram(sublistelement, interval):
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
-            return len(polygon_result_list)
+            return polygon_result_list
         else:
             return 0
     elif interval == "12PM-3PM":
@@ -857,7 +862,7 @@ def search_within_polygon_histogram(sublistelement, interval):
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
-            return len(polygon_result_list)
+            return polygon_result_list
         else:
             return 0
     elif interval == "4PM-7PM":
@@ -865,7 +870,7 @@ def search_within_polygon_histogram(sublistelement, interval):
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
-            return len(polygon_result_list)
+            return polygon_result_list
         else:
             return 0
     elif interval == "8PM-11PM":
@@ -873,7 +878,7 @@ def search_within_polygon_histogram(sublistelement, interval):
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("polygon_result_list", len(polygon_result_list))
-            return len(polygon_result_list)
+            return polygon_result_list
         else:
             return 0
     else:
@@ -881,7 +886,8 @@ def search_within_polygon_histogram(sublistelement, interval):
         result = Model.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
-            print("polygon_result_list", len(polygon_result_list))
+            print("foundsublistelement",sublistelement)
+            print("polygon_result_list", polygon_result_list)
             return polygon_result_list
         else:
             return 0
@@ -963,6 +969,7 @@ def search_within_polygon_heatmap(sublistelement, interval):
         result = Model.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
+            print("returned sublist element", sublistelement)
             print("new_data_list", polygon_result_list[0])
             print("polygon_result_list", len(polygon_result_list))
         return len(polygon_result_list)
@@ -1092,6 +1099,15 @@ def create_grid(cell_size_meters):
     return grid_gdf
 
 
+def create_interval_for_dial(grid):
+    #return unique elements from list
+    grid_set = set(grid)
+    sorted_grid_set = sorted(grid_set)
+    number_of_intervals = 3
+    split_data = np.array_split(sorted_grid_set, number_of_intervals)
+    return split_data
+
+
 def create_bounding_box(latitude, longitude, distance):
 
     deg_per_meter_lat = 1 / 111320  # Approx. 1 degree latitude = 111.32 km
@@ -1138,6 +1154,57 @@ def create_grid_heatmap_new(distance, latitude, longitude):
 
             # Create a Shapely geometry box for the current grid cell in EPSG:4326
             cell_4326 = box(min_lat, min_lon, max_lat, max_lon)
+            grid.append(cell_4326)
+
+    # Create a GeoDataFrame from the grid cells
+    grid_gdf = gpd.GeoDataFrame(geometry=grid, crs="EPSG:4326")
+
+    return grid_gdf
+
+
+# new function updated with bbox
+# Function to create grid heatmap based on transformed bounding box
+def create_grid_heatmap_new_bbox(distance, latitude, longitude):
+    print("latitude", latitude)
+    print("longitude", longitude)
+
+    # Calculate bounding box using the create_bounding_box function
+    bbox = create_bounding_box(latitude, longitude, distance)
+
+    # Extract the bounding box coordinates
+    min_lat = bbox["south"]
+    max_lat = bbox["north"]
+    min_lon = bbox["west"]
+    max_lon = bbox["east"]
+
+    print("Bounding box:", bbox)
+
+    # Create transformers for coordinate conversions
+    transformer_to_3857 = Transformer.from_crs("EPSG:4326", "EPSG:3857")
+    transformer_to_4326 = Transformer.from_crs("EPSG:3857", "EPSG:4326")
+
+    # Transform the bounding box coordinates to EPSG:3857
+    min_x, min_y = transformer_to_3857.transform(min_lat, min_lon)
+    max_x, max_y = transformer_to_3857.transform(max_lat, max_lon)
+
+    grid_size = 5
+    half_grid_size = grid_size // 2
+
+    # Create a grid of squares
+    grid = []
+    for i in range(-half_grid_size, half_grid_size + 1):
+        for j in range(-half_grid_size, half_grid_size + 1):
+            cell_min_x = min_x + (i * distance)
+            cell_min_y = min_y + (j * distance)
+            cell_max_x = cell_min_x + distance
+            cell_max_y = cell_min_y + distance
+
+            # Transform the EPSG:3857 coordinates back to EPSG:4326
+            min_lon, min_lat = transformer_to_4326.transform(cell_min_y, cell_min_x)
+            max_lon, max_lat = transformer_to_4326.transform(cell_max_y, cell_max_x)
+
+            # Create a Shapely geometry box for the current grid cell in EPSG:4326
+            cell_4326 = box(min_lon, min_lat, max_lon, max_lat)
             grid.append(cell_4326)
 
     # Create a GeoDataFrame from the grid cells
@@ -1294,6 +1361,7 @@ def create_filtered_models():
 def get_data(response, filename):
     json_str = response.get_data(as_text=True)
     python_dict = json.loads(json_str)
+    print("python_dict", python_dict)
     # flattened list
     data_not_none_list = [d for sublist in python_dict for d in (sublist if isinstance(sublist, list) else [sublist]) if
                           d != 0]
@@ -1302,6 +1370,8 @@ def get_data(response, filename):
 
     neighborhood_result_list = []
     for element in data_not_none_list:
+        print("ELEMENT", element)
+
         if isinstance(element, dict) and 'CPD_NEIGHBORHOOD' in element:
             neighborhood_result_list.append(element['CPD_NEIGHBORHOOD'])
     print("neighborhood_result_list", neighborhood_result_list)
@@ -1340,7 +1410,6 @@ def get_data(response, filename):
 
     return datajson
 
-
 @app.route('/createnewgrids')
 def create_new_grids():
     # call create_grids(element)
@@ -1348,7 +1417,7 @@ def create_new_grids():
     # return response files created
 
     # create_grids((700, "meters", "All"))
-    create_grids((700, "meters", "12AM-3AM"))
+    # create_grids((700, "meters", "12AM-3AM"))
     # create_grids((700, "meters", "4AM-7AM"))
     # create_grids((700, "meters", "8AM-11AM"))
     # create_grids((700, "meters", "12PM-3PM"))
@@ -1361,8 +1430,8 @@ def create_new_grids():
     # create_grids((750, "meters", "12PM-3PM"))
     # create_grids((750, "meters", "4PM-7PM"))
     # create_grids((750, "meters", "8PM-11PM"))
-    # create_grids((800, "meters", "All"))
-    # create_grids((800, "meters", "12AM-3AM"))
+    #create_grids((800, "meters", "All"))
+    create_grids((800, "meters", "12AM-3AM"))
     # create_grids((800, "meters", "4AM-7AM"))
     # create_grids((800, "meters", "8AM-11AM"))
     # create_grids((800, "meters", "12PM-3PM"))
@@ -1421,6 +1490,7 @@ def create_grids(element):
     polygon = reverse_coordinates(grid_geojson_parsed)
     # print("polygon", polygon)
     polygon_list.append(polygon)
+
     # TODO Need to fix the performance - function is called twice
     data_list = get_count_of_grid_histogram(polygon, interval)
 
@@ -1564,6 +1634,11 @@ def success(safe, work, current, destination, interval, gridsize):
         bounding_box_work = create_bounding_box(user.workcoordinates[1], user.workcoordinates[0], meters)
         bounding_box_destination = create_bounding_box(user.destinationcoordinates[1], user.destinationcoordinates[0], meters)
 
+        interval_lists = create_interval_for_dial(user.grid)
+        interval_list1 = interval_lists[0]
+        interval_list2 = interval_lists[1]
+        interval_list3 = interval_lists[2]
+
         print("bounding_box_safe",bounding_box_safe)
         print("bounding_box_current",bounding_box_current)
         print("bounding_box_work",bounding_box_work)
@@ -1599,7 +1674,8 @@ def success(safe, work, current, destination, interval, gridsize):
         df_current.to_csv('static/data/heatmap/heatmap_data_current.csv', index=False)
         df_destination.to_csv('static/data/heatmap/heatmap_data_destination.csv', index=False)
 
-        return render_template('success.html', key=key, grid=user.grid, radius=user.radius,
+        return render_template('success.html', key=key, grid=user.grid, maxgridelement=max(user.grid),
+                               radius=user.radius,
                                latsafecoordinate=user.safecoordinates[1],
                                lonsafecoordinate=user.safecoordinates[0],
                                latcurrentcoordinate=user.currentcoordinates[1],
@@ -1615,7 +1691,10 @@ def success(safe, work, current, destination, interval, gridsize):
                                bounding_box_safe=bounding_box_safe,
                                bounding_box_current=bounding_box_current,
                                bounding_box_work=bounding_box_work,
-                               bounding_box_destination=bounding_box_destination
+                               bounding_box_destination=bounding_box_destination,
+                               intervalOne=interval_list1,
+                               intervalTwo=interval_list2,
+                               intervalThree=interval_list3
                                )
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
