@@ -17,23 +17,15 @@ class CustomJSONEncoder(json.JSONEncoder):
 # data should be filtered by frontend user. Need to validate
 class Model(db.DynamicDocument):
     id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
-    UCR = db.IntField()
-    DST = db.IntField()
-    BEAT = db.IntField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
     FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -48,7 +40,7 @@ class Model(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_new',
+    meta = {'collection': 'police_cinci_data_all',
             'strict': False}
 
     def to_json(self):
@@ -57,19 +49,10 @@ class Model(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
@@ -90,20 +73,15 @@ class Model(db.DynamicDocument):
 # Used to filter Model based on interval and distance than on deletegrid endpoint data will be deleted for grid calculation
 class IntervalOne(db.DynamicDocument):
     _id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
     HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -120,7 +98,7 @@ class IntervalOne(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_one',
+    meta = {'collection': 'police_cinci_data_interval_all_one',
             'strict': False}
 
     def to_json(self):
@@ -129,19 +107,10 @@ class IntervalOne(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
@@ -161,20 +130,14 @@ class IntervalOne(db.DynamicDocument):
 
 class IntervalTwo(db.DynamicDocument):
     _id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -191,7 +154,7 @@ class IntervalTwo(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_two',
+    meta = {'collection': 'police_cinci_data_interval_all_two',
             'strict': False}
 
     def to_json(self):
@@ -200,19 +163,10 @@ class IntervalTwo(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
@@ -232,20 +186,14 @@ class IntervalTwo(db.DynamicDocument):
 
 class IntervalThree(db.DynamicDocument):
     _id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -262,7 +210,7 @@ class IntervalThree(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_three',
+    meta = {'collection': 'police_cinci_data_interval_all_three',
             'strict': False}
 
     def to_json(self):
@@ -271,19 +219,10 @@ class IntervalThree(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
@@ -303,20 +242,14 @@ class IntervalThree(db.DynamicDocument):
 
 class IntervalFour(db.DynamicDocument):
     _id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -333,8 +266,9 @@ class IntervalFour(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_four',
+    meta = {'collection': 'police_cinci_data_interval_all_four',
             'strict': False}
+
 
     def to_json(self):
         return {
@@ -342,19 +276,10 @@ class IntervalFour(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
@@ -374,20 +299,14 @@ class IntervalFour(db.DynamicDocument):
 
 class IntervalFive(db.DynamicDocument):
     _id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -404,7 +323,7 @@ class IntervalFive(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_five',
+    meta = {'collection': 'police_cinci_data_interval_all_five',
             'strict': False}
 
     def to_json(self):
@@ -413,19 +332,10 @@ class IntervalFive(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
@@ -445,20 +355,14 @@ class IntervalFive(db.DynamicDocument):
 
 class IntervalSix(db.DynamicDocument):
     _id = db.ObjectIdField()
-    INCIDENT_NO = db.IntField()
+    INCIDENT_NO = db.StringField()
     DATE_REPORTED = db.StringField()
     DATE_FROM = db.StringField()
     DATE_TO = db.StringField()
-    CLSD = db.StringField()
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    FLOOR = db.StringField()
-    OPENING = db.StringField()
-    SIDE = db.StringField()
-    HATE_BIAS = db.StringField()
     DAYOFWEEK = db.StringField()
-    RPT_AREA = db.IntField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
@@ -475,7 +379,7 @@ class IntervalSix(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_six',
+    meta = {'collection': 'police_cinci_data_interval_all_six',
             'strict': False}
 
     def to_json(self):
@@ -484,19 +388,10 @@ class IntervalSix(db.DynamicDocument):
             "DATE_REPORTED": self.DATE_REPORTED,
             "DATE_FROM": self.DATE_FROM,
             "DATE_TO": self.DATE_TO,
-            "CLSD": self.CLSD,
-            "UCR": self.UCR,
-            "DST": self.DST,
-            "BEAT": self.BEAT,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
-            "FLOOR": self.FLOOR,
-            "OPENING": self.OPENING,
-            "SIDE": self.SIDE,
-            "HATE_BIAS": self.HATE_BIAS,
             "DAYOFWEEK": self.DAYOFWEEK,
-            "RPT_AREA": self.RPT_AREA,
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,

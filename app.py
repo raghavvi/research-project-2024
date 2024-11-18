@@ -96,7 +96,23 @@ def load_dataset():
 
 
 def load_dataset2():
-    hourpipeline = [
+
+    combined_pipeline = [
+        {
+            '$addFields': {
+                'point': {
+                    'type': 'Point',
+                    'coordinates': ['$LONGITUDE_X', '$LATITUDE_X']
+                }
+            }
+        },
+        {
+            '$addFields': {
+                'time': {
+                    '$substr': ['$DATE_REPORTED', 11, 13]
+                }
+            }
+        },
         {
             '$addFields': {
                 'hour': {
@@ -106,10 +122,34 @@ def load_dataset2():
         }
     ]
 
-    hour_result = Model.objects().aggregate(*hourpipeline)
-    hour_result_list = [doc for doc in hour_result]
+    hour_result = Model.objects(INCIDENT_NO__ne=None).aggregate(*combined_pipeline, batchSize=100)
+    hour_result_list = [
+        doc for doc in hour_result
+        if doc.get('LONGITUDE_X') != 999999.0 and doc.get('LATITUDE_X') != 999999.0
+    ]
+    print("hour_result_list",hour_result_list[0:10])
 
     return hour_result_list
+
+@app.route('/updateemptyattributes')
+def update_none_attributes():
+    try:
+        Model.objects(DATE_REPORTED=None).update(set__DATE_REPORTED="NA")
+        Model.objects(DATE_FROM=None).update(set__DATE_FROM="NA")
+        Model.objects(DATE_TO=None).update(set__DATE_TO="NA")
+        Model.objects(OPENING=None).update(set__OPENING="NA")
+        Model.objects(LOCATION=None).update(set__LOCATION="NA")
+        Model.objects(THEFT_CODE=None).update(set__THEFT_CODE="NA")
+        Model.objects(FLOOR=None).update(set__FLOOR="NA")
+        Model.objects(WEAPONS=None).update(set__WEAPONS="NA")
+        Model.objects(DATE_OF_CLEARANCE=None).update(set__DATE_OF_CLEARANCE="NA")
+        Model.objects(ADDRESS_X=None).update(set__ADDRESS_X="NA")
+        Model.objects(LONGITUDE_X=None).update(set__LONGITUDE_X=999999.0)
+        Model.objects(LATITUDE_X=None).update(set__LATITUDE_X=999999.0)
+        return jsonify({"status": "success", "message": 200})
+    except Exception as e:
+        # Handle exceptions if the update fails
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 def filter_time_interval(interval, data):
@@ -146,11 +186,13 @@ def filter_time_interval(interval, data):
 
 def filter_dataset(interval, data):
     # #Filter out crime incidents that do not have a location
-    point_results = [result for result in data if result.get('point') != [0, 0]]
+    point_results = [result for result in data if result.get('point') != [999999.0, 999999.0]]
+    print("point_results",point_results[0:5])
 
     heavy_crime_list = ['FELONIOUS ASSAULT', 'ASSAULT', 'AGGRAVATED BURGLARY',
                         'AGGRAVATED ROBBERY', 'RAPE', 'ROBBERY', 'MURDER']
     offense_result = [result for result in point_results if result.get('OFFENSE') in heavy_crime_list]
+    print("offense_result", offense_result[0:5])
     filtered_results = filter_time_interval(interval, offense_result)
 
     return filtered_results
@@ -1324,7 +1366,7 @@ def create_filtered_models():
         hour_aggregate_data = load_dataset2()
         for interval in interval_list:
             data = filter_dataset(interval, hour_aggregate_data)
-            filtered_data_list = [doc for doc in data]
+            filtered_data_list = [doc for doc in data if doc.get("INCIDENT_NO") is not None and isinstance(doc["INCIDENT_NO"], str)]
             if interval == "12AM-3AM":
                 for doc in filtered_data_list:
                     new_model_instance = IntervalOne(**doc)
@@ -1350,10 +1392,7 @@ def create_filtered_models():
                     new_model_instance = IntervalSix(**doc)
                     new_model_instance.save()
 
-        return jsonify(
-            {"status": "success", "one_count": IntervalOne.countDocuments(), "two_count": IntervalTwo.countDocuments(),
-             "three_count": IntervalThree.countDocuments(), "four_count": IntervalFour.countDocuments(),
-             "five_count": IntervalFive.countDocuments(), "six_count": IntervalSix.countDocuments()}), 200
+        return jsonify({"status": "success", "message": 200})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
