@@ -40,7 +40,62 @@ class Model(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_all',
+    meta = {'collection': 'police_data',
+            'strict': False}
+
+    def to_json(self):
+        return {
+            "INCIDENT_NO": self.INCIDENT_NO,
+            "DATE_REPORTED": self.DATE_REPORTED,
+            "DATE_FROM": self.DATE_FROM,
+            "DATE_TO": self.DATE_TO,
+            "OFFENSE": self.OFFENSE,
+            "LOCATION": self.LOCATION,
+            "THEFT_CODE": self.THEFT_CODE,
+            "DAYOFWEEK": self.DAYOFWEEK,
+            "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
+            "WEAPONS": self.WEAPONS,
+            "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
+            "HOUR_FROM": self.HOUR_FROM,
+            "HOUR_TO": self.HOUR_TO,
+            "ADDRESS_X": self.ADDRESS_X,
+            "LONGITUDE_X": self.LONGITUDE_X,
+            "LATITUDE_X": self.LATITUDE_X,
+            "point": self.point,
+            "year": self.year,
+            "day": self.day,
+            "month": self.month,
+            "time": self.time,
+            "hour": self.hour
+        }
+
+
+class FilteredModel(db.DynamicDocument):
+    id = db.ObjectIdField()
+    INCIDENT_NO = db.StringField()
+    DATE_REPORTED = db.StringField()
+    DATE_FROM = db.StringField()
+    DATE_TO = db.StringField()
+    OFFENSE = db.StringField()
+    LOCATION = db.StringField()
+    THEFT_CODE = db.StringField()
+    FLOOR = db.StringField()
+    DAYOFWEEK = db.StringField()
+    CPD_NEIGHBORHOOD = db.StringField()
+    WEAPONS = db.StringField()
+    DATE_OF_CLEARANCE = db.StringField()
+    HOUR_FROM = db.IntField()
+    HOUR_TO = db.IntField()
+    ADDRESS_X = db.StringField()
+    LONGITUDE_X = db.FloatField()
+    LATITUDE_X = db.FloatField()
+    point = db.PointField()
+    year = db.StringField()
+    day = db.StringField()
+    month = db.StringField()
+    time = db.StringField()
+    hour = db.StringField()
+    meta = {'collection': 'filtered_police_data',
             'strict': False}
 
     def to_json(self):
@@ -98,7 +153,7 @@ class IntervalOne(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_all_one',
+    meta = {'collection': 'police_data_one',
             'strict': False}
 
     def to_json(self):
@@ -154,7 +209,7 @@ class IntervalTwo(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_all_two',
+    meta = {'collection': 'police_data_two',
             'strict': False}
 
     def to_json(self):
@@ -210,7 +265,7 @@ class IntervalThree(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_all_three',
+    meta = {'collection': 'police_data_three',
             'strict': False}
 
     def to_json(self):
@@ -266,9 +321,8 @@ class IntervalFour(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_all_four',
+    meta = {'collection': 'police_data_four',
             'strict': False}
-
 
     def to_json(self):
         return {
@@ -323,7 +377,7 @@ class IntervalFive(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_all_five',
+    meta = {'collection': 'police_data_five',
             'strict': False}
 
     def to_json(self):
@@ -379,7 +433,7 @@ class IntervalSix(db.DynamicDocument):
     month = db.StringField()
     time = db.StringField()
     hour = db.StringField()
-    meta = {'collection': 'police_cinci_data_interval_all_six',
+    meta = {'collection': 'police_data_six',
             'strict': False}
 
     def to_json(self):

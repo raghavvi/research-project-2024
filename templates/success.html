@@ -240,6 +240,11 @@
               height: 25px
         }
 
+        .loc-dropdown {
+              width: 25px;
+              height: 25px
+        }
+
         .dial-container {
             width: 100%;
             height: 22%;
@@ -450,8 +455,16 @@
 
 
                         <div class="tab-content">
+
                             <div id="menu1" class="tab-pane fade in active">
-                                <div id="histogram"></div>
+                                <div style="height: 300px;">
+                                    <p id="textelement2"></p>
+                                    <p id="textelement"></p>
+                                    <br>
+                                    <div id="histogram2"></div>
+                                    <br>
+                                    <div id="histogram3"></div>
+                                </div>
                             </div>
 
                             <div id="menu2" class="tab-pane fade">
@@ -467,11 +480,12 @@
                             </div>
 
                             <div id="menu3" class="tab-pane fade">
-
+                                <br>
                                 <div id="container" style="height: 300px;">
                                 </div>
-
                             </div>
+
+
                         </div>
 
 
@@ -576,7 +590,7 @@
             .attr("x", (width / 2))
             .attr("y", 0 - (margin.top / 2) + 20)
             .attr("text-anchor", "middle")
-            .style("font-size", "16px")
+            .style("font-size", "12px")
             .style("text-decoration", "underline")
             .text("Histogram");
 
@@ -636,6 +650,299 @@
        .on("mousemove", moveTooltip)
        .on("mouseleave", hideTooltip);
     }
+
+
+    function addHistogram2() {
+       let currentValue = parseFloat("{{middle_element_current_count}}");
+       // set the dimensions and margins of the graph
+       console.log("Histogram function");
+
+        var grid = "{{grid}}";
+
+       console.log("grid", grid);
+
+       const margin = {top: 40, right: 30, bottom: 30, left: 52},
+       width = 280 - margin.left - margin.right,
+       height = 140 - margin.top - margin.bottom;
+
+       // append the svg object to the body of the page
+       const svg = d3.select("#histogram2")
+       .append("svg")
+       .attr("width", width + margin.left + margin.right)
+       .attr("height", height + margin.top + margin.bottom)
+       .append("g")
+       .attr("transform",
+       `translate(${margin.left},${margin.top})`);
+
+       // X axis: scale and draw:
+       const x = d3.scaleLinear()
+       .domain([0,10])
+       .range([0, width])
+       svg.append("g")
+       .attr("transform", `translate(0, ${height})`)
+       .call(d3.axisBottom(x));
+
+       // set the parameters for the histogram
+       const histogram = d3.histogram()
+       .value(function(d) { return d; })
+      .domain(x.domain())  // then the domain of the graphic
+      .thresholds(x.ticks(15)); // then the numbers of bins
+
+       // And apply this function to data to get the bins
+       const bins = histogram(grid);
+       console.log("bins", bins);
+       console.log("The number of bins is " + bins.length)
+
+       // Y axis: scale and draw:
+       const y = d3.scaleLog()
+       .range([height, 0])
+       .domain([1, d3.max(bins, function(d) { return d.length; })]);
+       svg.append("g")
+        .call(d3.axisLeft(y).ticks(5, d3.format(",.0f")));
+
+        // Add X axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", width)
+            .attr("font-size", "10px")
+            .attr("y", height + margin.top)
+            .text("Crime Counts");
+
+        // Y axis label:
+        svg.append("text")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -height / 2)
+            .attr("y", -margin.left + 10)
+            .attr("font-size", "10px")
+            .text("Frequency")
+
+        svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", -margin.top / 2 + 5)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .style("text-decoration", "underline")
+            .text("Crime Count per Neighborhood");
+
+      // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+      // Its opacity is set to 0: we don't see it by default.
+      const tooltip = d3.select("#histogram2")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "#466c9e")
+        .style("color", "white")
+        .style("border-radius", "5px")
+        .style("width", "55px")
+        .style("height", "15px")
+        .style("font-size", ".575rem")
+        .style("text-align", "center")
+        .style("line-height", "15px")
+
+      // A function that change this tooltip when the user hover a point.
+      // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+      const showTooltip = function(event,d) {
+        tooltip
+          .transition()
+          .duration(100)
+          .style("opacity", 1)
+        tooltip
+          .html(d.length)
+          .style("left", (event.x)/2-100 + "px")
+          .style("top", (event.y)/2 + "px")
+      }
+      const moveTooltip = function(event,d) {
+        const svgWidth = width + margin.left + margin.right;
+        const tooltipWidth = parseFloat(tooltip.style("width"));
+        const tooltipHeight = parseFloat(tooltip.style("height"));
+        tooltip
+        .style("left", (event.pageX - (tooltipWidth / 2)) + "px")
+        .style("top", (event.pageY - tooltipHeight - 10) + "px");
+      }
+      // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+      const hideTooltip = function(event,d) {
+        tooltip
+          .transition()
+          .duration(100)
+          .style("opacity", 0)
+      }
+
+       // append the bar rectangles to the svg element
+       svg.selectAll("rect")
+       .data(bins)
+       .attr("class", "bar")
+       .join("rect")
+       .attr("x", 1)
+       .attr("transform", function(d) { return `translate(${x(d.x0)} , ${y(d.length)})`})
+       .attr("width", function(d) { return x(d.x1) - x(d.x0) - 0.375; })
+       .attr("height", function(d) { return height - y(d.length); })
+       .style("fill", "#466c9e")
+       .on("mouseover", showTooltip)
+       .on("mousemove", moveTooltip)
+       .on("mouseleave", hideTooltip);
+
+        svg.selectAll("rect")
+            .filter(function(d) {
+                // Check if the current value falls within the bin range
+                return currentValue >= d.x0 && currentValue < d.x1;
+            })
+            .style("fill", "orange");
+
+    }
+
+ function addHistogram3() {
+
+      var gridData = {{ current_all_interval_count_list | tojson }};
+
+       const margin = {top: 30, right: 30, bottom: 30, left: 40},
+       width = 280 - margin.left - margin.right,
+       height = 140 - margin.top - margin.bottom;
+
+       // append the svg object to the body of the page
+       const svg = d3.select("#histogram3")
+       .append("svg")
+       .attr("width", width + margin.left + margin.right)
+       .attr("height", height + margin.top + margin.bottom)
+       .append("g")
+       .attr("transform",
+       `translate(${margin.left},${margin.top})`);
+
+       // X axis: scale and draw:
+       const x = d3.scaleLinear()
+       .domain([0,10])
+       .range([0, width])
+       svg.append("g")
+       .attr("transform", `translate(0, ${height})`)
+       .call(d3.axisBottom(x));
+
+       // set the parameters for the histogram
+       const histogram = d3.histogram()
+       .value(function(d) { return d; })
+      .domain(x.domain())  // then the domain of the graphic
+      .thresholds(x.ticks(15)); // then the numbers of bins
+
+       // Y axis: scale and draw:
+        const y = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, d3.max(gridData, function(d) { return d; }) || 1]); // Use 1 as fallback to avoid domain [0, 0]
+        svg.append("g")
+            .call(d3.axisLeft(y).ticks(5));
+
+       // And apply this function to data to get the bins
+       const bins = histogram(gridData);
+       console.log("bins", bins);
+       console.log("The number of bins is " + bins.length)
+
+        // Add X axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", width)
+            .attr("font-size", "10px")
+            .attr("y", height + margin.top)
+            .text("interval");
+
+        // Y axis label:
+        svg.append("text")
+           .attr("text-anchor",  "middle")
+           .attr("transform", "rotate(-90)")
+           .attr("x", -height / 2)
+           .attr("y", -margin.left + 10)
+           .attr("font-size", "10px")
+           .text("Crime Count at Location")
+
+
+        svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", -margin.top / 2 + 5)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .style("text-decoration", "underline")
+            .text("Counts of crimes in the next 24 hours");
+
+      // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+      // Its opacity is set to 0: we don't see it by default.
+      const tooltip = d3.select("#histogram3")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "#466c9e")
+        .style("color", "white")
+        .style("border-radius", "5px")
+        .style("width", "55px")
+        .style("height", "15px")
+        .style("font-size", ".575rem")
+        .style("text-align", "center")
+        .style("line-height", "15px")
+
+      // A function that change this tooltip when the user hover a point.
+      // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+      const showTooltip = function(event,d) {
+        tooltip
+          .transition()
+          .duration(100)
+          .style("opacity", 1)
+        tooltip
+          .html(d.length)
+          .style("left", (event.x)/2-100 + "px")
+          .style("top", (event.y)/2 + "px")
+      }
+      const moveTooltip = function(event,d) {
+        const svgWidth = width + margin.left + margin.right;
+        const tooltipWidth = parseFloat(tooltip.style("width"));
+        const tooltipHeight = parseFloat(tooltip.style("height"));
+        tooltip
+        .style("left", (event.pageX - (tooltipWidth / 2)) + "px")
+        .style("top", (event.pageY - tooltipHeight - 10) + "px");
+      }
+      // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+      const hideTooltip = function(event,d) {
+        tooltip
+          .transition()
+          .duration(100)
+          .style("opacity", 0)
+      }
+
+       // append the bar rectangles to the svg element
+       svg.selectAll("rect")
+       .data(bins)
+       .join("rect")
+       .attr("x", d => x(d.x0))
+       .attr("y", d => y(d.length))
+       .attr("transform", function(d) { return `translate(${x(d.x0)} , ${y(d.length)})`})
+       .attr("width", function(d) { return x(d.x1) - x(d.x0) - 0.375; })
+       .attr("height", function(d) { return height - y(d.length); })
+       .style("fill", "#466c9e")
+       .on("mouseover", showTooltip)
+       .on("mousemove", moveTooltip)
+       .on("mouseleave", hideTooltip);
+    }
+
+    function textForInfo(){
+        //  3 crimes within 500 m, between 1-3pm in the last 5 years
+        var currentCount = parseFloat("{{middle_element_current_count}}");
+        var years = parseFloat("{{years}}");
+        var radius = parseFloat("{{radius}}");
+        var interval = "{{interval}}";
+        console.log("currentCount", currentCount);
+        console.log("years", years);
+        console.log("radius", radius);
+        console.log("interval", interval);
+        let message = currentCount + " crimes within " + radius + " m, between " + interval + " in the last " + years + " years";
+        return message;
+    }
+    document.getElementById("textelement2").textContent = textForInfo();
+
+    function textForPercentage(){
+            let text = "{{current_text}}";
+            let percentage = parseFloat("{{current_percentage}}");
+            console.log("text", text);
+            console.log("percentage", percentage);
+            let message = "This falls within the "  + text + " " + percentage + "% of locations";
+            console.log("message", message);
+            return message;
+    }
+    document.getElementById("textelement").textContent = textForPercentage();
 
     function val() {
 
@@ -920,7 +1227,7 @@ function createGauge() {
             tickWidth: 2,
             minorTickInterval: null,
             labels: {
-                distance: lastIntervalThree,
+                distance: 15,
                 style: {
                     fontSize: '14px'
                 }
@@ -956,6 +1263,8 @@ function createGauge() {
 
 
     addHistogram()
+    addHistogram2()
+    addHistogram3()
     callHeatmap()
     createGauge()
 

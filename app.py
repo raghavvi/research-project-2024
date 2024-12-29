@@ -1,6 +1,8 @@
 import json
 import math
+from collections import defaultdict
 
+from bson import ObjectId
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
 from shapely.geometry import box
@@ -12,7 +14,7 @@ from geopy.geocoders import Nominatim
 from dotenv import load_dotenv
 import os
 from models import db, CustomJSONEncoder, IntervalOne, IntervalTwo, \
-    IntervalThree, IntervalFour, IntervalFive, IntervalSix
+    IntervalThree, IntervalFour, IntervalFive, IntervalSix, FilteredModel
 from models import Model
 import pandas as pd
 import numpy as np
@@ -95,8 +97,90 @@ def load_dataset():
     return hour_result_list
 
 
-def load_dataset2():
+def get_difference_in_years():
+    combined_pipeline = [
+        {
+            "$match": {
+                "DATE_REPORTED": {
+                    "$ne": "",  # Exclude empty strings
+                    "$exists": True,  # Ensure the field exists
+                    "$type": "string"  # Ensure it's a string
+                }
+            }
+        },
+        {
+            "$addFields": {
+                "year": {
+                    "$substr": ["$DATE_REPORTED", 6, 4]
+                }
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "maxYear": {"$max": "$year"},
+                "minYear": {"$min": "$year"}
+            }
+        }
+    ]
+    result = FilteredModel.objects().aggregate(*combined_pipeline)
+    result = list(result)
+    print("result0",result[0])
+    if result:
+        max_year = result[0]["maxYear"]
+        min_year = result[0]["minYear"]
+        print(f"Max Year: {max_year}, Min Year: {min_year}")
+        max_year = int(max_year)
+        min_year = int(min_year)
+        difference = max_year - min_year
+        return difference
+    else:
+        print("No data found")
+        return 0
 
+
+# filtered_records = Model.objects.filter(INCIDENT_NO__startswith="COPY OF")
+# print(f"Filtered records count: {filtered_records.count()}")
+# filtered_records.delete()
+# print("Records starting with 'COPY OF' have been deleted.")
+# print("Updated Model count", Model.objects.count())
+
+# @app.route('/removeduplicates')
+# def remove_duplicates():
+#     try:
+#         print("Initial IntervalTwo count:", IntervalTwo.objects.count())
+#
+#         # Group records by INCIDENT_NO
+#         incident_count = defaultdict(list)
+#         for record in IntervalTwo.objects():
+#             incident_no = record.INCIDENT_NO
+#             if incident_no:
+#                 incident_count[incident_no].append(record)
+#
+#         # Identify duplicates
+#         duplicates = {key: value for key, value in incident_count.items() if len(value) > 1}
+#         print("Duplicate keys before cleanup:", duplicates.keys())
+#
+#         # Safeguard: Log the duplicates to be deleted
+#         total_deletes = 0
+#
+#         # Process duplicates
+#         for incident_no, records in duplicates.items():
+#             # Keep the first record, delete the rest
+#             for duplicate in records[1:]:
+#                 print(f"Deleting record with ADDRESS_X: {duplicate.ADDRESS_X}, INCIDENT_NO: {incident_no}")
+#                 duplicate.delete()
+#                 total_deletes += 1
+#
+#         print(f"Total records deleted: {total_deletes}")
+#         print("Updated IntervalTwo count:", IntervalTwo.objects.count())
+#
+#         return jsonify({"status": "success", "message": f"Duplicates removed. Total deleted: {total_deletes}"}), 200
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+def load_dataset2():
     combined_pipeline = [
         {
             '$addFields': {
@@ -114,6 +198,13 @@ def load_dataset2():
             }
         },
         {
+            "$addFields": {
+                "ampm": {
+                    "$substr": ["$DATE_REPORTED", 20, 2]
+                }
+            }
+        },
+        {
             '$addFields': {
                 'hour': {
                     '$substr': ['$time', 0, 2]
@@ -127,12 +218,13 @@ def load_dataset2():
         doc for doc in hour_result
         if doc.get('LONGITUDE_X') != 999999.0 and doc.get('LATITUDE_X') != 999999.0
     ]
-    print("hour_result_list",hour_result_list[0:10])
+    print("hour_result_list", hour_result_list[0:10])
 
     return hour_result_list
 
-@app.route('/updateemptyattributes')
-def update_none_attributes():
+
+@app.route('/updateattributes')
+def update_attributes():
     try:
         Model.objects(DATE_REPORTED=None).update(set__DATE_REPORTED="NA")
         Model.objects(DATE_FROM=None).update(set__DATE_FROM="NA")
@@ -153,6 +245,32 @@ def update_none_attributes():
 
 
 def filter_time_interval(interval, data):
+    if interval == "12AM-3AM":
+        newlist = [result for result in data if
+                   (result.get('hour') in ['12', '01', '02', '03']) and result.get('ampm') == 'AM']
+    elif interval == '4AM-7AM':
+        newlist = [result for result in data if
+                   (result.get('hour') in ['04', '05', '06', '07']) and result.get('ampm') == 'AM']
+    elif interval == "8AM-11AM":
+        newlist = [result for result in data if
+                   (result.get('hour') in ['08', '09', '10', '11']) and result.get('ampm') == 'AM']
+    elif interval == "12PM-3PM":
+        newlist = [result for result in data if
+                   (result.get('hour') in ['12', '01', '02', '03']) and result.get('ampm') == 'PM']
+    elif interval == "4PM-7PM":
+        newlist = [result for result in data if
+                   (result.get('hour') in ['04', '05', '06', '07']) and result.get('ampm') == 'PM']
+    elif interval == "8PM-11PM":
+        newlist = [result for result in data if
+                   (result.get('hour') in ['08', '09', '10', '11']) and result.get('ampm') == 'PM']
+    else:
+        newlist = [result for result in data]
+        print("newlist0", newlist[0])
+    return newlist
+
+
+# add ampm
+def filter_time_interval_old(interval, data):
     if interval == "12AM-3AM":
         newlist = [result for result in data if result.get('hour') == '00' or result.get('hour') == '01'
                    or result.get('hour') == '02' or result.get('hour') == '03']
@@ -187,7 +305,7 @@ def filter_time_interval(interval, data):
 def filter_dataset(interval, data):
     # #Filter out crime incidents that do not have a location
     point_results = [result for result in data if result.get('point') != [999999.0, 999999.0]]
-    print("point_results",point_results[0:5])
+    print("point_results", point_results[0:5])
 
     heavy_crime_list = ['FELONIOUS ASSAULT', 'ASSAULT', 'AGGRAVATED BURGLARY',
                         'AGGRAVATED ROBBERY', 'RAPE', 'ROBBERY', 'MURDER']
@@ -199,7 +317,6 @@ def filter_dataset(interval, data):
 
 
 def switch_grids2(grid, interval):
-
     file_all_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700metersAll.json')
     file_12am_3am_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters12AM-3AM.json')
     file_4am_7am_700meters = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700meters4AM-7AM.json')
@@ -264,7 +381,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "700 meters" and interval == "12AM-3AM":
         try:
@@ -273,7 +390,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "700 meters" and interval == "4AM-7AM":
         try:
@@ -282,7 +399,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "700 meters" and interval == "8AM-11AM":
         try:
@@ -291,7 +408,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "700 meters" and interval == "12PM-3PM":
         try:
@@ -300,7 +417,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "700 meters" and interval == "4PM-7PM":
         try:
@@ -318,7 +435,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "12AM-11PM":
         try:
@@ -327,7 +444,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "12AM-3AM":
         try:
@@ -336,7 +453,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "4AM-7AM":
         try:
@@ -345,7 +462,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "8AM-11AM":
         try:
@@ -354,7 +471,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "12PM-3PM":
         try:
@@ -363,7 +480,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "4PM-7PM":
         try:
@@ -372,7 +489,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "750 meters" and interval == "8PM-11PM":
         try:
@@ -381,7 +498,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "12AM-11PM":
         try:
@@ -390,7 +507,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "12AM-3AM":
         try:
@@ -399,7 +516,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "4AM-7AM":
         try:
@@ -408,7 +525,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "8AM-11AM":
         try:
@@ -417,7 +534,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "12PM-3PM":
         try:
@@ -426,7 +543,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "4PM-7PM":
         try:
@@ -435,7 +552,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "800 meters" and interval == "8PM-11PM":
         try:
@@ -444,7 +561,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "12AM-11PM":
         try:
@@ -453,7 +570,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "12AM-3AM":
         try:
@@ -462,7 +579,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "4AM-7AM":
         try:
@@ -471,7 +588,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "8AM-11AM":
         try:
@@ -480,7 +597,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "12PM-3PM":
         try:
@@ -489,7 +606,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "4PM-7PM":
         try:
@@ -498,7 +615,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "850 meters" and interval == "8PM-11PM":
         try:
@@ -507,7 +624,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "12AM-11PM":
         try:
@@ -516,7 +633,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "12AM-3AM":
         try:
@@ -525,7 +642,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "4AM-7AM":
         try:
@@ -534,7 +651,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "8AM-11AM":
         try:
@@ -543,7 +660,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "12PM-3PM":
         try:
@@ -552,7 +669,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "4PM-7PM":
         try:
@@ -561,7 +678,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "900 meters" and interval == "8PM-11PM":
         try:
@@ -570,7 +687,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "12AM-11PM":
         try:
@@ -579,7 +696,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "12AM-3AM":
         try:
@@ -588,7 +705,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "4AM-7AM":
         try:
@@ -597,7 +714,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "8AM-11AM":
         try:
@@ -606,7 +723,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "12PM-3PM":
         try:
@@ -615,7 +732,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "4PM-7PM":
         try:
@@ -624,7 +741,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "950 meters" and interval == "8PM-11PM":
         try:
@@ -633,7 +750,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "12AM-11PM":
         try:
@@ -642,7 +759,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "12AM-3AM":
         try:
@@ -651,7 +768,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "4AM-7AM":
         try:
@@ -660,7 +777,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "8AM-11AM":
         try:
@@ -669,7 +786,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "12PM-3PM":
         try:
@@ -678,7 +795,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "4PM-7PM":
         try:
@@ -687,7 +804,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 kilometer" and interval == "8PM-11PM":
         try:
@@ -696,7 +813,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "12AM-11PM":
         try:
@@ -705,7 +822,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "12AM-3AM":
         try:
@@ -714,7 +831,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "4AM-7AM":
         try:
@@ -723,7 +840,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "8AM-11AM":
         try:
@@ -732,7 +849,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "12PM-3PM":
         try:
@@ -741,7 +858,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "4PM-7PM":
         try:
@@ -750,7 +867,7 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
     elif grid == "1 mile" and interval == "8PM-11PM":
         try:
@@ -759,12 +876,14 @@ def switch_grids2(grid, interval):
             appended_list = datajson.get("appended_list", [])
             return appended_list
         except FileNotFoundError:
-            print("No file found: ",grid, interval)
+            print("No file found: ", grid, interval)
             return None
+
 
 def coord_lister(geom):
     coords = list(geom.exterior.coords)
     return (coords)
+
 
 def get_radius(radius, unit):
     radius = float(radius)
@@ -834,7 +953,24 @@ def create_dataframe(rowlist, collist, countlist, centerlist):
     return data
 
 
-# assign true to middle element in list else false
+def compute_range_percentage(count, countlist):
+    arr = np.array(countlist)
+    if count in range(0, 4):
+        arr_range = (arr >= 0) & (arr <= 4)
+        safe_percentage = np.sum(arr[arr_range])
+        return ["safest", safe_percentage]
+    elif count in range(5, 10):
+        arr_range = (arr >= 5) & (arr <= 10)
+        moderate_percentage = np.sum(arr[arr_range])
+        return ["moderate", moderate_percentage]
+    elif count in range(10, max(arr)):
+        arr_range = (arr >= 10) & (arr <= max(arr))
+        heavy_percentage = np.sum(arr[arr_range])
+        return ["heaviest", heavy_percentage]
+
+    # assign true to mid dle element in list else false
+
+
 def get_middle_element_of_count_list(count_list):
     # if even
     if len(count_list) % 2 == 0:
@@ -874,11 +1010,11 @@ def search_within_polygon_histogram(sublistelement, interval):
         result = IntervalOne.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
-            print("foundsublist",sublistelement)
+            # print("foundsublist", sublistelement)
             print("polygon_result_list", len(polygon_result_list))
             return polygon_result_list
         else:
-            print("notfoundsublistelement",sublistelement)
+            # print("notfoundsublistelement", sublistelement)
             with open("not_found_sublist_elements.txt", "a") as file:
                 file.write(f"notfoundsublistelement: {sublistelement}\n")
             return 0
@@ -925,13 +1061,16 @@ def search_within_polygon_histogram(sublistelement, interval):
             return 0
     else:
         # All intervals
+        # element = [e for e in Model.objects()]
+        # print("First element", element[0])
         result = Model.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
-            print("foundsublistelement",sublistelement)
+            print("foundsublistelement", sublistelement)
             print("polygon_result_list", polygon_result_list)
             return polygon_result_list
         else:
+            # print("notfoundelement", sublistelement)
             return 0
 
 
@@ -1142,7 +1281,7 @@ def create_grid(cell_size_meters):
 
 
 def create_interval_for_dial(grid):
-    #return unique elements from list
+    # return unique elements from list
     grid_set = set(grid)
     sorted_grid_set = sorted(grid_set)
     number_of_intervals = 3
@@ -1151,7 +1290,6 @@ def create_interval_for_dial(grid):
 
 
 def create_bounding_box(latitude, longitude, distance):
-
     deg_per_meter_lat = 1 / 111320  # Approx. 1 degree latitude = 111.32 km
     lat_diff = distance * deg_per_meter_lat
 
@@ -1356,17 +1494,21 @@ def delete_filtered_models():
 @app.route('/createfilteredmodels')
 def create_filtered_models():
     try:
-        interval_list = ["12AM-3AM",
-                         "4AM-7AM",
-                         "8AM-11AM",
-                         "12PM-3PM",
-                         "4PM-7PM",
-                         "8PM-11PM"]
+        interval_list = [
+            "12AM-3AM",
+            # "4AM-7AM",
+            #  "8AM-11AM",
+            #  "12PM-3PM",
+            #  "4PM-7PM",
+            #  "8PM-11PM",
+            "All"
+        ]
 
         hour_aggregate_data = load_dataset2()
         for interval in interval_list:
             data = filter_dataset(interval, hour_aggregate_data)
-            filtered_data_list = [doc for doc in data if doc.get("INCIDENT_NO") is not None and isinstance(doc["INCIDENT_NO"], str)]
+            filtered_data_list = [doc for doc in data if
+                                  doc.get("INCIDENT_NO") is not None and isinstance(doc["INCIDENT_NO"], str)]
             if interval == "12AM-3AM":
                 for doc in filtered_data_list:
                     new_model_instance = IntervalOne(**doc)
@@ -1390,6 +1532,11 @@ def create_filtered_models():
             elif interval == "8PM-11PM":
                 for doc in filtered_data_list:
                     new_model_instance = IntervalSix(**doc)
+                    new_model_instance.save()
+            else:
+                print("Update model with filtered data results")
+                for doc in filtered_data_list:
+                    new_model_instance = FilteredModel(**doc)
                     new_model_instance.save()
 
         return jsonify({"status": "success", "message": 200})
@@ -1449,13 +1596,14 @@ def get_data(response, filename):
 
     return datajson
 
+
 @app.route('/createnewgrids')
 def create_new_grids():
     # call create_grids(element)
     # element is tuplecle
     # return response files created
 
-    # create_grids((700, "meters", "All"))
+    create_grids((700, "meters", "All"))
     # create_grids((700, "meters", "12AM-3AM"))
     # create_grids((700, "meters", "4AM-7AM"))
     # create_grids((700, "meters", "8AM-11AM"))
@@ -1469,8 +1617,8 @@ def create_new_grids():
     # create_grids((750, "meters", "12PM-3PM"))
     # create_grids((750, "meters", "4PM-7PM"))
     # create_grids((750, "meters", "8PM-11PM"))
-    #create_grids((800, "meters", "All"))
-    create_grids((800, "meters", "12AM-3AM"))
+    # create_grids((800, "meters", "All"))
+    # create_grids((800, "meters", "12AM-3AM"))
     # create_grids((800, "meters", "4AM-7AM"))
     # create_grids((800, "meters", "8AM-11AM"))
     # create_grids((800, "meters", "12PM-3PM"))
@@ -1584,10 +1732,10 @@ def success(safe, work, current, destination, interval, gridsize):
         print("workcoordinates", user.workcoordinates)
 
         user.add_current_coordinates(currentlocation.latitude, currentlocation.longitude)
-        print("currentcoordinates",user.currentcoordinates)
+        print("currentcoordinates", user.currentcoordinates)
 
         user.add_destination_coordinates(destinationlocation.latitude, destinationlocation.longitude)
-        print("destinationcoordinates",user.destinationcoordinates)
+        print("destinationcoordinates", user.destinationcoordinates)
 
         gridsplit = gridsize.split()
         radius = gridsplit[0]
@@ -1623,14 +1771,13 @@ def success(safe, work, current, destination, interval, gridsize):
 
         meters = get_meters(user.radius, user.units)
 
-        #Will comment out block
+        # Will comment out block
         countsafe = get_crimecounts_forlocation(user.safecoordinates, filtered_data_list, meters)
         countwork = get_crimecounts_forlocation(user.workcoordinates, filtered_data_list, meters)
         countcurrent = get_crimecounts_forlocation(user.currentcoordinates, filtered_data_list, meters)
         countdestination = get_crimecounts_forlocation(user.destinationcoordinates, filtered_data_list, meters)
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination",
               countdestination)
-        #
 
         safepolygon = create_heatmap_polygon(meters, safelocation)
         workpolygon = create_heatmap_polygon(meters, worklocation)
@@ -1652,36 +1799,53 @@ def success(safe, work, current, destination, interval, gridsize):
         conditional_work_center_point_list = [True if index == middle_index else
                                               False for index, num in enumerate(work_count_list)]
         middle_element_work_count = work_count_list[middle_index]
-        print("middle_element_work_count",middle_element_work_count)
+        print("middle_element_work_count", middle_element_work_count)
 
         middle_index = get_middle_element_of_count_list(current_count_list)
         conditional_current_center_point_list = [True if index == middle_index else
                                                  False for index, num in enumerate(current_count_list)]
         middle_element_current_count = current_count_list[middle_index]
-        print("middle_element_current_count",middle_element_current_count)
+        print("middle_element_current_count", middle_element_current_count)
 
         middle_index = get_middle_element_of_count_list(destination_count_list)
         conditional_destination_center_point_list = [True if index == middle_index else
                                                      False for index, num in enumerate(destination_count_list)]
         middle_element_destination_count = destination_count_list[middle_index]
-        print("middle_element_destination_count",middle_element_destination_count)
+        print("middle_element_destination_count", middle_element_destination_count)
 
         print("conditional_safe_center_point_list", conditional_safe_center_point_list)
 
+        current_all_interval_count_list = []
+        # generate list of middle elements for all current counts. Iterate through the list of intervals
+        interval_list = ["12AM-3AM",
+                         "4AM-7AM",
+                         "8AM-11AM",
+                         "12PM-3PM",
+                         "4PM-7PM",
+                         "8PM-11PM"]
+
+        for i in interval_list:
+            current_count_list = get_count_of_grid_heatmap(currentpolygon, i)
+            # get middle element of current_count_list
+            middle_element_current_count = current_count_list[middle_index]
+            current_all_interval_count_list.append(middle_element_current_count)
+
+        print("current_all_interval_count_list", current_all_interval_count_list)
         bounding_box_safe = create_bounding_box(user.safecoordinates[1], user.safecoordinates[0], meters)
         bounding_box_current = create_bounding_box(user.currentcoordinates[1], user.currentcoordinates[0], meters)
         bounding_box_work = create_bounding_box(user.workcoordinates[1], user.workcoordinates[0], meters)
-        bounding_box_destination = create_bounding_box(user.destinationcoordinates[1], user.destinationcoordinates[0], meters)
+        bounding_box_destination = create_bounding_box(user.destinationcoordinates[1], user.destinationcoordinates[0],
+                                                       meters)
 
         interval_lists = create_interval_for_dial(user.grid)
         interval_list1 = interval_lists[0]
         interval_list2 = interval_lists[1]
         interval_list3 = interval_lists[2]
 
-        print("bounding_box_safe",bounding_box_safe)
-        print("bounding_box_current",bounding_box_current)
-        print("bounding_box_work",bounding_box_work)
-        print("bounding_box_destination",bounding_box_destination)
+        print("bounding_box_safe", bounding_box_safe)
+        print("bounding_box_current", bounding_box_current)
+        print("bounding_box_work", bounding_box_work)
+        print("bounding_box_destination", bounding_box_destination)
 
         rows_list = ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "C", "C", "C", "C", "C", "D", "D", "D", "D", "D",
                      "E", "E", "E", "E", "E"]
@@ -1700,7 +1864,7 @@ def success(safe, work, current, destination, interval, gridsize):
 
         destination_dataframe = create_dataframe(rows_list, col_list, destination_count_list,
                                                  conditional_destination_center_point_list)
-        print("destination_dataframe", destination_dataframe)
+        # print("destination_dataframe", destination_dataframe)
 
         df_safe = pd.DataFrame(safe_dataframe)
         df_work = pd.DataFrame(work_dataframe)
@@ -1713,8 +1877,28 @@ def success(safe, work, current, destination, interval, gridsize):
         df_current.to_csv('static/data/heatmap/heatmap_data_current.csv', index=False)
         df_destination.to_csv('static/data/heatmap/heatmap_data_destination.csv', index=False)
 
+        safe_statistic = compute_range_percentage(middle_element_safe_count, safe_count_list)
+        current_statistic = compute_range_percentage(middle_element_current_count, current_count_list)
+        work_statistic = compute_range_percentage(middle_element_work_count, work_count_list)
+        destination_statistic = compute_range_percentage(middle_element_destination_count, destination_count_list)
+
+        safe_percentage, safe_text = safe_statistic[1], safe_statistic[0]
+        current_percentage, current_text = current_statistic[1], current_statistic[0]
+        work_percentage, work_text = work_statistic[1], work_statistic[0]
+        destination_percentage, destination_text = destination_statistic[1], destination_statistic[0]
+
+        print("safe_percentage", safe_percentage)
+        print("current_percentage", current_percentage)
+        print("work_percentage", work_percentage)
+        print("destination_percentage", destination_percentage)
+        print("interval",interval)
+
+        # number_of_years = get_difference_in_years()
+        # print("number_of_years",number_of_years)
+
         return render_template('success.html', key=key, grid=user.grid, maxgridelement=max(user.grid),
-                               radius=user.radius,
+                               radius=user.radius, interval=user.interval,
+                               years=13,
                                latsafecoordinate=user.safecoordinates[1],
                                lonsafecoordinate=user.safecoordinates[0],
                                latcurrentcoordinate=user.currentcoordinates[1],
@@ -1733,7 +1917,16 @@ def success(safe, work, current, destination, interval, gridsize):
                                bounding_box_destination=bounding_box_destination,
                                intervalOne=interval_list1,
                                intervalTwo=interval_list2,
-                               intervalThree=interval_list3
+                               intervalThree=interval_list3,
+                               safe_percentage=safe_percentage,
+                               current_percentage=current_percentage,
+                               work_percentage=work_percentage,
+                               destination_percentage=destination_percentage,
+                               safe_text=safe_text,
+                               current_text=current_text,
+                               work_text=work_text,
+                               destination_text=destination_text,
+                               current_all_interval_count_list=current_all_interval_count_list
                                )
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
