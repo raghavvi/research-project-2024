@@ -460,9 +460,7 @@
                                 <div style="height: 300px;">
                                     <p id="textelement2"></p>
                                     <p id="textelement"></p>
-                                    <br>
                                     <div id="histogram2"></div>
-                                    <br>
                                     <div id="histogram3"></div>
                                 </div>
                             </div>
@@ -661,9 +659,9 @@
 
        console.log("grid", grid);
 
-       const margin = {top: 40, right: 30, bottom: 30, left: 52},
+       const margin = {top: 40, right: 30, bottom: 40, left: 52},
        width = 280 - margin.left - margin.right,
-       height = 140 - margin.top - margin.bottom;
+       height = 160 - margin.top - margin.bottom;
 
        // append the svg object to the body of the page
        const svg = d3.select("#histogram2")
@@ -791,132 +789,77 @@
 
     }
 
- function addHistogram3() {
+function addHistogram3() {
+    const gridData = {{ current_all_interval_count_list | tojson }};
+    const intervalData = {{ interval_list | tojson }};
 
-      var gridData = {{ current_all_interval_count_list | tojson }};
+    const margin = {top: 50, right: 30, bottom: 80, left: 50},
+        width = 300 - margin.left - margin.right,
+        height = 180 - margin.top - margin.bottom;
 
-       const margin = {top: 30, right: 30, bottom: 30, left: 40},
-       width = 280 - margin.left - margin.right,
-       height = 140 - margin.top - margin.bottom;
+    const svg = d3.select("#histogram3")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-       // append the svg object to the body of the page
-       const svg = d3.select("#histogram3")
-       .append("svg")
-       .attr("width", width + margin.left + margin.right)
-       .attr("height", height + margin.top + margin.bottom)
-       .append("g")
-       .attr("transform",
-       `translate(${margin.left},${margin.top})`);
-
-       // X axis: scale and draw:
-       const x = d3.scaleLinear()
-       .domain([0,10])
-       .range([0, width])
-       svg.append("g")
-       .attr("transform", `translate(0, ${height})`)
-       .call(d3.axisBottom(x));
-
-       // set the parameters for the histogram
-       const histogram = d3.histogram()
-       .value(function(d) { return d; })
-      .domain(x.domain())  // then the domain of the graphic
-      .thresholds(x.ticks(15)); // then the numbers of bins
-
-       // Y axis: scale and draw:
-        const y = d3.scaleLinear()
-            .range([height, 0])
-            .domain([0, d3.max(gridData, function(d) { return d; }) || 1]); // Use 1 as fallback to avoid domain [0, 0]
+    // X-axis
+    const x = d3.scaleBand()
+        .domain(intervalData)
+        .range([0, width])
+        .padding(0.1)
         svg.append("g")
-            .call(d3.axisLeft(y).ticks(5));
+            .attr("transform", `translate(0, ${height})`)
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .attr("transform", "rotate(45)")
+            .style("text-anchor", "start")
+             .style("font-size", "10px");
 
-       // And apply this function to data to get the bins
-       const bins = histogram(gridData);
-       console.log("bins", bins);
-       console.log("The number of bins is " + bins.length)
+    // Add X-axis title
+    svg.append("text")
+        .attr("text-anchor", "end")
+        .attr("x", width)
+        .attr("y", height + margin.bottom - 10)
+        .style("font-size", "12px")
+        .text("Interval");
 
-        // Add X axis label:
-        svg.append("text")
-            .attr("text-anchor", "end")
-            .attr("x", width)
-            .attr("font-size", "10px")
-            .attr("y", height + margin.top)
-            .text("interval");
+    // Y-axis
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(gridData, d => d) || 1])
+        .range([height, 0]);
+    svg.append("g")
+        .call(d3.axisLeft(y).ticks(5));
 
-        // Y axis label:
-        svg.append("text")
-           .attr("text-anchor",  "middle")
-           .attr("transform", "rotate(-90)")
-           .attr("x", -height / 2)
-           .attr("y", -margin.left + 10)
-           .attr("font-size", "10px")
-           .text("Crime Count at Location")
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)") // Rotate text for Y-axis
+        .attr("x", -height / 2)
+        .attr("y", -margin.left + 15) // Adjust position to the left of the axis
+        .style("font-size", "12px")
+        .text("Crime Count");
 
+    // Bars
+    svg.selectAll("rect")
+        .data(gridData)
+        .join("rect")
+        .attr("x", (d, i) => x(intervalData[i]))
+        .attr("y", d => y(d))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(d))
+        .style("fill", "#466c9e");
 
-        svg.append("text")
-            .attr("x", (width / 2))
-            .attr("y", -margin.top / 2 + 5)
-            .attr("text-anchor", "middle")
-            .style("font-size", "12px")
-            .style("text-decoration", "underline")
-            .text("Counts of crimes in the next 24 hours");
+    // Title
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", -margin.top / 2)
+        .attr("text-anchor", "middle")
+        .style("font-size", "12px")
+        .style("text-decoration", "underline")
+        .text("Counts of Crimes in the Next 24 Hours");
+}
 
-      // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
-      // Its opacity is set to 0: we don't see it by default.
-      const tooltip = d3.select("#histogram3")
-        .append("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip")
-        .style("background-color", "#466c9e")
-        .style("color", "white")
-        .style("border-radius", "5px")
-        .style("width", "55px")
-        .style("height", "15px")
-        .style("font-size", ".575rem")
-        .style("text-align", "center")
-        .style("line-height", "15px")
-
-      // A function that change this tooltip when the user hover a point.
-      // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
-      const showTooltip = function(event,d) {
-        tooltip
-          .transition()
-          .duration(100)
-          .style("opacity", 1)
-        tooltip
-          .html(d.length)
-          .style("left", (event.x)/2-100 + "px")
-          .style("top", (event.y)/2 + "px")
-      }
-      const moveTooltip = function(event,d) {
-        const svgWidth = width + margin.left + margin.right;
-        const tooltipWidth = parseFloat(tooltip.style("width"));
-        const tooltipHeight = parseFloat(tooltip.style("height"));
-        tooltip
-        .style("left", (event.pageX - (tooltipWidth / 2)) + "px")
-        .style("top", (event.pageY - tooltipHeight - 10) + "px");
-      }
-      // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
-      const hideTooltip = function(event,d) {
-        tooltip
-          .transition()
-          .duration(100)
-          .style("opacity", 0)
-      }
-
-       // append the bar rectangles to the svg element
-       svg.selectAll("rect")
-       .data(bins)
-       .join("rect")
-       .attr("x", d => x(d.x0))
-       .attr("y", d => y(d.length))
-       .attr("transform", function(d) { return `translate(${x(d.x0)} , ${y(d.length)})`})
-       .attr("width", function(d) { return x(d.x1) - x(d.x0) - 0.375; })
-       .attr("height", function(d) { return height - y(d.length); })
-       .style("fill", "#466c9e")
-       .on("mouseover", showTooltip)
-       .on("mousemove", moveTooltip)
-       .on("mouseleave", hideTooltip);
-    }
 
     function textForInfo(){
         //  3 crimes within 500 m, between 1-3pm in the last 5 years

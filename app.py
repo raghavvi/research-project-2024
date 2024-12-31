@@ -1831,6 +1831,7 @@ def success(safe, work, current, destination, interval, gridsize):
             current_all_interval_count_list.append(middle_element_current_count)
 
         print("current_all_interval_count_list", current_all_interval_count_list)
+        print("interval_list", interval_list)
         bounding_box_safe = create_bounding_box(user.safecoordinates[1], user.safecoordinates[0], meters)
         bounding_box_current = create_bounding_box(user.currentcoordinates[1], user.currentcoordinates[0], meters)
         bounding_box_work = create_bounding_box(user.workcoordinates[1], user.workcoordinates[0], meters)
@@ -1891,7 +1892,7 @@ def success(safe, work, current, destination, interval, gridsize):
         print("current_percentage", current_percentage)
         print("work_percentage", work_percentage)
         print("destination_percentage", destination_percentage)
-        print("interval",interval)
+        print("interval", interval)
 
         # number_of_years = get_difference_in_years()
         # print("number_of_years",number_of_years)
@@ -1926,7 +1927,8 @@ def success(safe, work, current, destination, interval, gridsize):
                                current_text=current_text,
                                work_text=work_text,
                                destination_text=destination_text,
-                               current_all_interval_count_list=current_all_interval_count_list
+                               current_all_interval_count_list=current_all_interval_count_list,
+                               interval_list=interval_list
                                )
     except GeocoderTimedOut as e:
         return render_template('404.html'), 404
