@@ -953,7 +953,7 @@ def create_dataframe(rowlist, collist, countlist, centerlist):
     return data
 
 
-def compute_range_percentage(count, countlist):
+def compute_range_percentage2(count, countlist):
     arr = np.array(countlist)
     if count in range(0, 4):
         arr_range = (arr >= 0) & (arr <= 4)
@@ -969,6 +969,74 @@ def compute_range_percentage(count, countlist):
         return ["heaviest", heavy_percentage]
 
     # assign true to mid dle element in list else false
+
+def compute_range_percentage3(count, countlist):
+    arr = np.array(countlist)
+    unique_elements, counts = np.unique(arr, return_counts=True)
+    count_dict = defaultdict(int, zip(unique_elements, counts))
+    print("count_dict", count_dict)
+    arr_length = len(arr)
+    print("arr_length",arr_length)
+    if count in range(0, 4):
+        #get unique elements that belong in range and add the sum of counts
+        print("range(0,4)")
+        filtered_dict = {key: value for key, value in count_dict.items() if 0 <= key <= 4}
+        print("filtered_dict",filtered_dict)
+        count_sum = sum(filtered_dict.values())
+        print("count_sum_percentage",count_sum/arr_length)
+        safe_percentage = count_sum / arr_length * 100
+        print("calaculate safe percentage", safe_percentage)
+        return ["safest", safe_percentage]
+    elif count in range(5, 10):
+        filtered_dict = {key: value for key, value in count_dict.items() if 5 <= key <= 10}
+        count_sum = sum(filtered_dict.values())
+        moderate_percentage = count_sum / arr_length * 100
+        return ["moderate", moderate_percentage]
+    elif count in range(10, max(arr)):
+        filtered_dict = {key: value for key, value in count_dict.items() if 10 <= key <= max(arr)}
+        count_sum = sum(filtered_dict.values())
+        heavy_percentage = count_sum / arr_length * 100
+        return ["heaviest", heavy_percentage]
+
+def compute_range_percentage(count, countlist):
+    arr = np.array(countlist)
+    unique_elements, counts = np.unique(arr, return_counts=True)
+    count_dict = defaultdict(int, zip(unique_elements, counts))
+    print("count_dict:", count_dict)
+
+    arr_length = len(arr)
+    print("arr_length:", arr_length)
+
+    if count in range(0, 4):
+        print("Processing range(0, 4)")
+        # Filter dictionary for keys in the range [0, 4)
+        filtered_dict = {key: value for key, value in count_dict.items() if 0 <= key <= 4}
+        print("filtered_dict:", filtered_dict)
+
+        count_sum = sum(filtered_dict.values())
+        print("count_sum:", count_sum)
+
+        safe_percentage = count_sum / arr_length * 100
+        print("safe_percentage:", safe_percentage)
+
+        # Final debug before return
+        return_value = ["safest", safe_percentage]
+        print("Return Value:", return_value)
+        return return_value
+
+    elif count in range(5, 10):
+        print("Processing range(5, 10)")
+        filtered_dict = {key: value for key, value in count_dict.items() if 5 <= key < 10}
+        count_sum = sum(filtered_dict.values())
+        moderate_percentage = count_sum / arr_length * 100
+        return ["moderate", moderate_percentage]
+
+    elif count in range(10, max(arr) + 1):
+        print("Processing range(10, max(arr) + 1)")
+        filtered_dict = {key: value for key, value in count_dict.items() if 10 <= key <= max(arr)}
+        count_sum = sum(filtered_dict.values())
+        heavy_percentage = count_sum / arr_length * 100
+        return ["heaviest", heavy_percentage]
 
 
 def get_middle_element_of_count_list(count_list):
@@ -1063,7 +1131,7 @@ def search_within_polygon_histogram(sublistelement, interval):
         # All intervals
         # element = [e for e in Model.objects()]
         # print("First element", element[0])
-        result = Model.objects.aggregate(*polygon_pipeline)
+        result = FilteredModel.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("foundsublistelement", sublistelement)
@@ -1147,7 +1215,7 @@ def search_within_polygon_heatmap(sublistelement, interval):
         return len(polygon_result_list)
     else:
         # All intervals
-        result = Model.objects.aggregate(*polygon_pipeline)
+        result = FilteredModel.objects.aggregate(*polygon_pipeline)
         polygon_result_list = [doc for doc in result]
         if len(polygon_result_list) != 0:
             print("returned sublist element", sublistelement)
@@ -1603,7 +1671,7 @@ def create_new_grids():
     # element is tuplecle
     # return response files created
 
-    create_grids((700, "meters", "All"))
+    # create_grids((700, "meters", "All"))
     # create_grids((700, "meters", "12AM-3AM"))
     # create_grids((700, "meters", "4AM-7AM"))
     # create_grids((700, "meters", "8AM-11AM"))
@@ -1639,26 +1707,26 @@ def create_new_grids():
     # create_grids((900, "meters", "4PM-7PM"))
     # create_grids((900, "meters", "8PM-11PM"))
     # create_grids((950, "meters", "All"))
-    # create_grids((950, "meters", "12AM-3AM"))
-    # create_grids((950, "meters", "4AM-7AM"))
-    # create_grids((950, "meters", "8AM-11AM"))
-    # create_grids((950, "meters", "12PM-3PM"))
-    # create_grids((950, "meters", "4PM-7PM"))
-    # create_grids((950, "meters", "8PM-11PM"))
+    create_grids((950, "meters", "12AM-3AM"))
+    create_grids((950, "meters", "4AM-7AM"))
+    create_grids((950, "meters", "8AM-11AM"))
+    create_grids((950, "meters", "12PM-3PM"))
+    create_grids((950, "meters", "4PM-7PM"))
+    create_grids((950, "meters", "8PM-11PM"))
     # create_grids((1, "kilometer", "All"))
-    # create_grids((1, "kilometer", "12AM-3AM"))
-    # create_grids((1, "kilometer", "4AM-7AM"))
-    # create_grids((1, "kilometer", "8AM-11AM"))
-    # create_grids((1, "kilometer", "12PM-3PM"))
-    # create_grids((1, "kilometer", "4PM-7PM"))
-    # create_grids((1, "kilometer", "8PM-11PM"))
+    create_grids((1, "kilometer", "12AM-3AM"))
+    create_grids((1, "kilometer", "4AM-7AM"))
+    create_grids((1, "kilometer", "8AM-11AM"))
+    create_grids((1, "kilometer", "12PM-3PM"))
+    create_grids((1, "kilometer", "4PM-7PM"))
+    create_grids((1, "kilometer", "8PM-11PM"))
     # create_grids((1, "mile", "All"))
-    # create_grids((1, "mile", "12AM-3AM"))
-    # create_grids((1, "mile", "4AM-7AM"))
-    # create_grids((1, "mile", "8AM-11AM"))
-    # create_grids((1, "mile", "12PM-3PM"))
-    # create_grids((1, "mile", "4PM-7PM"))
-    # create_grids((1, "mile", "8PM-11PM"))
+    create_grids((1, "mile", "12AM-3AM"))
+    create_grids((1, "mile", "4AM-7AM"))
+    create_grids((1, "mile", "8AM-11AM"))
+    create_grids((1, "mile", "12PM-3PM"))
+    create_grids((1, "mile", "4PM-7PM"))
+    create_grids((1, "mile", "8PM-11PM"))
 
     return "Files Created", 200
 
@@ -1742,8 +1810,10 @@ def success(safe, work, current, destination, interval, gridsize):
         unit = gridsplit[1]
 
         print("gridsize", gridsize)
+        start_time = time.time()
         selected_grid = switch_grids2(gridsize, interval)
         print("selected_grid", selected_grid)
+        print("--- %s selected_grid secconds ---" % (time.time() - start_time))
 
         # file_name = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', '700metersAll.json')
         #
@@ -1779,15 +1849,19 @@ def success(safe, work, current, destination, interval, gridsize):
         print("countsafe", countsafe, "countwork", countwork, "countcurrent", countcurrent, "countdestination",
               countdestination)
 
+        start_time = time.time()
         safepolygon = create_heatmap_polygon(meters, safelocation)
         workpolygon = create_heatmap_polygon(meters, worklocation)
         currentpolygon = create_heatmap_polygon(meters, currentlocation)
         destinationpolygon = create_heatmap_polygon(meters, destinationlocation)
+        print("--- %s create_heatmap_polygon secconds ---" % (time.time() - start_time))
 
+        start_time = time.time()
         safe_count_list = get_count_of_grid_heatmap(safepolygon, user.interval)
         work_count_list = get_count_of_grid_heatmap(workpolygon, user.interval)
         current_count_list = get_count_of_grid_heatmap(currentpolygon, user.interval)
         destination_count_list = get_count_of_grid_heatmap(destinationpolygon, user.interval)
+        print("--- %s get_count_of_grid_heatmap secconds ---" % (time.time() - start_time))
 
         middle_index = get_middle_element_of_count_list(safe_count_list)
         conditional_safe_center_point_list = [True if index == middle_index else
@@ -1815,6 +1889,7 @@ def success(safe, work, current, destination, interval, gridsize):
 
         print("conditional_safe_center_point_list", conditional_safe_center_point_list)
 
+        start_time = time.time()
         current_all_interval_count_list = []
         # generate list of middle elements for all current counts. Iterate through the list of intervals
         interval_list = ["12AM-3AM",
@@ -1832,27 +1907,32 @@ def success(safe, work, current, destination, interval, gridsize):
 
         print("current_all_interval_count_list", current_all_interval_count_list)
         print("interval_list", interval_list)
+        print("--- %s current_all_interval_count_list secconds ---" % (time.time() - start_time))
+
+        start_time = time.time()
         bounding_box_safe = create_bounding_box(user.safecoordinates[1], user.safecoordinates[0], meters)
         bounding_box_current = create_bounding_box(user.currentcoordinates[1], user.currentcoordinates[0], meters)
         bounding_box_work = create_bounding_box(user.workcoordinates[1], user.workcoordinates[0], meters)
         bounding_box_destination = create_bounding_box(user.destinationcoordinates[1], user.destinationcoordinates[0],
                                                        meters)
 
-        interval_lists = create_interval_for_dial(user.grid)
-        interval_list1 = interval_lists[0]
-        interval_list2 = interval_lists[1]
-        interval_list3 = interval_lists[2]
-
         print("bounding_box_safe", bounding_box_safe)
         print("bounding_box_current", bounding_box_current)
         print("bounding_box_work", bounding_box_work)
         print("bounding_box_destination", bounding_box_destination)
+        print("--- %s bounding_box_ secconds ---" % (time.time() - start_time))
+
+        interval_lists = create_interval_for_dial(user.grid)
+        interval_list1 = interval_lists[0]
+        interval_list2 = interval_lists[1]
+        interval_list3 = interval_lists[2]
 
         rows_list = ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "C", "C", "C", "C", "C", "D", "D", "D", "D", "D",
                      "E", "E", "E", "E", "E"]
         col_list = ["v1", "v2", "v3", "v4", "v5", "v1", "v2", "v3", "v4", "v5", "v1", "v2", "v3", "v4", "v5",
                     "v1", "v2", "v3", "v4", "v5", "v1", "v2", "v3", "v4", "v5"]
 
+        start_time = time.time()
         safe_dataframe = create_dataframe(rows_list, col_list, safe_count_list, conditional_safe_center_point_list)
         print("safe_dataframe", safe_dataframe)
 
@@ -1877,22 +1957,33 @@ def success(safe, work, current, destination, interval, gridsize):
         df_work.to_csv('static/data/heatmap/heatmap_data_work.csv', index=False)
         df_current.to_csv('static/data/heatmap/heatmap_data_current.csv', index=False)
         df_destination.to_csv('static/data/heatmap/heatmap_data_destination.csv', index=False)
+        print("--- %s create_dataframe secconds ---" % (time.time() - start_time))
 
-        safe_statistic = compute_range_percentage(middle_element_safe_count, safe_count_list)
-        current_statistic = compute_range_percentage(middle_element_current_count, current_count_list)
-        work_statistic = compute_range_percentage(middle_element_work_count, work_count_list)
-        destination_statistic = compute_range_percentage(middle_element_destination_count, destination_count_list)
-
-        safe_percentage, safe_text = safe_statistic[1], safe_statistic[0]
-        current_percentage, current_text = current_statistic[1], current_statistic[0]
-        work_percentage, work_text = work_statistic[1], work_statistic[0]
-        destination_percentage, destination_text = destination_statistic[1], destination_statistic[0]
-
-        print("safe_percentage", safe_percentage)
-        print("current_percentage", current_percentage)
-        print("work_percentage", work_percentage)
-        print("destination_percentage", destination_percentage)
+        start_time = time.time()
+        # safe_statistic = compute_range_percentage(middle_element_safe_count, safe_count_list)
+        # current_statistic = compute_range_percentage(middle_element_current_count, current_count_list)
+        # work_statistic = compute_range_percentage(middle_element_work_count, work_count_list)
+        # destination_statistic = compute_range_percentage(middle_element_destination_count, destination_count_list)
+        #
+        # safe_percentage, safe_text = safe_statistic[1], safe_statistic[0]
+        # current_percentage, current_text = current_statistic[1], current_statistic[0]
+        # work_percentage, work_text = work_statistic[1], work_statistic[0]
+        # destination_percentage, destination_text = destination_statistic[1], destination_statistic[0]
+        #
+        # print("safe_percentage", safe_percentage)
+        # print("current_percentage", current_percentage)
+        # print("work_percentage", work_percentage)
+        # print("destination_percentage", destination_percentage)
         print("interval", interval)
+
+        print("middle_element_current_count", middle_element_current_count)
+        print("current_count_list", current_count_list)
+        current_statistic_new = compute_range_percentage(middle_element_current_count, current_count_list)
+        print("current_statistic v", current_statistic_new)
+
+        current_percentage, current_text = current_statistic_new[1], current_statistic_new[0]
+
+        print("--- %s compute_range_percentage secconds ---" % (time.time() - start_time))
 
         # number_of_years = get_difference_in_years()
         # print("number_of_years",number_of_years)
@@ -1919,14 +2010,14 @@ def success(safe, work, current, destination, interval, gridsize):
                                intervalOne=interval_list1,
                                intervalTwo=interval_list2,
                                intervalThree=interval_list3,
-                               safe_percentage=safe_percentage,
+                               # safe_percentage=safe_percentage,
                                current_percentage=current_percentage,
-                               work_percentage=work_percentage,
-                               destination_percentage=destination_percentage,
-                               safe_text=safe_text,
+                               # work_percentage=work_percentage,
+                               # destination_percentage=destination_percentage,
+                               # safe_text=safe_text,
                                current_text=current_text,
-                               work_text=work_text,
-                               destination_text=destination_text,
+                               # work_text=work_text,
+                               # destination_text=destination_text,
                                current_all_interval_count_list=current_all_interval_count_list,
                                interval_list=interval_list
                                )
