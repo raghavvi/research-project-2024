@@ -73,9 +73,7 @@ class Model(db.DynamicDocument):
 class FilteredModel(db.DynamicDocument):
     id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
@@ -84,8 +82,6 @@ class FilteredModel(db.DynamicDocument):
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
@@ -101,9 +97,7 @@ class FilteredModel(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -111,8 +105,6 @@ class FilteredModel(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,
@@ -125,28 +117,21 @@ class FilteredModel(db.DynamicDocument):
         }
 
 
-# Used to filter Model based on interval and distance than on deletegrid endpoint data will be deleted for grid calculation
 class IntervalOne(db.DynamicDocument):
-    _id = db.ObjectIdField()
+    id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
-    HATE_BIAS = db.StringField()
+    FLOOR = db.StringField()
     DAYOFWEEK = db.StringField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
-    VICTIM_AGE = db.StringField()
-    VICTIM_RACE = db.StringField()
     point = db.PointField()
     year = db.StringField()
     day = db.StringField()
@@ -159,9 +144,7 @@ class IntervalOne(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -169,8 +152,6 @@ class IntervalOne(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,
@@ -184,25 +165,20 @@ class IntervalOne(db.DynamicDocument):
 
 
 class IntervalTwo(db.DynamicDocument):
-    _id = db.ObjectIdField()
+    id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
+    FLOOR = db.StringField()
     DAYOFWEEK = db.StringField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
-    VICTIM_AGE = db.StringField()
-    VICTIM_RACE = db.StringField()
     point = db.PointField()
     year = db.StringField()
     day = db.StringField()
@@ -215,9 +191,7 @@ class IntervalTwo(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -225,8 +199,6 @@ class IntervalTwo(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,
@@ -240,25 +212,20 @@ class IntervalTwo(db.DynamicDocument):
 
 
 class IntervalThree(db.DynamicDocument):
-    _id = db.ObjectIdField()
+    id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
+    FLOOR = db.StringField()
     DAYOFWEEK = db.StringField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
-    VICTIM_AGE = db.StringField()
-    VICTIM_RACE = db.StringField()
     point = db.PointField()
     year = db.StringField()
     day = db.StringField()
@@ -271,9 +238,7 @@ class IntervalThree(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -281,8 +246,6 @@ class IntervalThree(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,
@@ -296,25 +259,20 @@ class IntervalThree(db.DynamicDocument):
 
 
 class IntervalFour(db.DynamicDocument):
-    _id = db.ObjectIdField()
+    id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
+    FLOOR = db.StringField()
     DAYOFWEEK = db.StringField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
-    VICTIM_AGE = db.StringField()
-    VICTIM_RACE = db.StringField()
     point = db.PointField()
     year = db.StringField()
     day = db.StringField()
@@ -327,9 +285,7 @@ class IntervalFour(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -337,8 +293,6 @@ class IntervalFour(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,
@@ -352,25 +306,20 @@ class IntervalFour(db.DynamicDocument):
 
 
 class IntervalFive(db.DynamicDocument):
-    _id = db.ObjectIdField()
+    id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
+    FLOOR = db.StringField()
     DAYOFWEEK = db.StringField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
-    VICTIM_AGE = db.StringField()
-    VICTIM_RACE = db.StringField()
     point = db.PointField()
     year = db.StringField()
     day = db.StringField()
@@ -383,9 +332,7 @@ class IntervalFive(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -393,8 +340,6 @@ class IntervalFive(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,
@@ -408,25 +353,20 @@ class IntervalFive(db.DynamicDocument):
 
 
 class IntervalSix(db.DynamicDocument):
-    _id = db.ObjectIdField()
+    id = db.ObjectIdField()
     INCIDENT_NO = db.StringField()
-    DATE_REPORTED = db.StringField()
-    DATE_FROM = db.StringField()
-    DATE_TO = db.StringField()
+    MID_DATE = db.StringField(required=False)
     OFFENSE = db.StringField()
     LOCATION = db.StringField()
     THEFT_CODE = db.StringField()
+    FLOOR = db.StringField()
     DAYOFWEEK = db.StringField()
     CPD_NEIGHBORHOOD = db.StringField()
     WEAPONS = db.StringField()
     DATE_OF_CLEARANCE = db.StringField()
-    HOUR_FROM = db.IntField()
-    HOUR_TO = db.IntField()
     ADDRESS_X = db.StringField()
     LONGITUDE_X = db.FloatField()
     LATITUDE_X = db.FloatField()
-    VICTIM_AGE = db.StringField()
-    VICTIM_RACE = db.StringField()
     point = db.PointField()
     year = db.StringField()
     day = db.StringField()
@@ -439,9 +379,7 @@ class IntervalSix(db.DynamicDocument):
     def to_json(self):
         return {
             "INCIDENT_NO": self.INCIDENT_NO,
-            "DATE_REPORTED": self.DATE_REPORTED,
-            "DATE_FROM": self.DATE_FROM,
-            "DATE_TO": self.DATE_TO,
+            "MID_DATE": self.MID_DATE,
             "OFFENSE": self.OFFENSE,
             "LOCATION": self.LOCATION,
             "THEFT_CODE": self.THEFT_CODE,
@@ -449,8 +387,6 @@ class IntervalSix(db.DynamicDocument):
             "CPD_NEIGHBORHOOD": self.CPD_NEIGHBORHOOD,
             "WEAPONS": self.WEAPONS,
             "DATE_OF_CLEARANCE": self.DATE_OF_CLEARANCE,
-            "HOUR_FROM": self.HOUR_FROM,
-            "HOUR_TO": self.HOUR_TO,
             "ADDRESS_X": self.ADDRESS_X,
             "LONGITUDE_X": self.LONGITUDE_X,
             "LATITUDE_X": self.LATITUDE_X,

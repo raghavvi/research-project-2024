@@ -1,7 +1,7 @@
 import json
 import math
 from collections import defaultdict
-
+from datetime import datetime
 from bson import ObjectId
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import time
@@ -125,7 +125,7 @@ def get_difference_in_years():
     ]
     result = FilteredModel.objects().aggregate(*combined_pipeline)
     result = list(result)
-    print("result0",result[0])
+    print("result0", result[0])
     if result:
         max_year = result[0]["maxYear"]
         min_year = result[0]["minYear"]
@@ -178,6 +178,103 @@ def get_difference_in_years():
 #         return jsonify({"status": "success", "message": f"Duplicates removed. Total deleted: {total_deletes}"}), 200
 #     except Exception as e:
 #         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# iterate through model objects list
+# pass from and to stringField take difference as datetime
+# if difference is less than or equal to two filter out model - create new list comprehension to model - NewModel
+def update_time_entries_for_model3():
+    combined_pipeline = [
+        {
+            '$addFields': {
+                'point': {
+                    'type': 'Point',
+                    'coordinates': ['$LONGITUDE_X', '$LATITUDE_X']
+                }
+            }
+        }
+    ]
+
+    hour_result = Model.objects(INCIDENT_NO__ne=None).aggregate(*combined_pipeline, batchSize=100)
+    point_results_new = [
+        doc for doc in hour_result
+        if doc.get('LONGITUDE_X') != 999999.0 and doc.get('LATITUDE_X') != 999999.0
+    ]
+
+    # print("point_results", point_results[0:5])
+    # pass in entries foor valid times in 2 intervals
+
+    heavy_crime_list = ['FELONIOUS ASSAULT', 'ASSAULT', 'AGGRAVATED BURGLARY',
+                        'AGGRAVATED ROBBERY', 'RAPE', 'ROBBERY', 'MURDER']
+    offense_result_new = [result for result in point_results_new if result.get('OFFENSE') in heavy_crime_list]
+
+    print("length of offense_result", len(offense_result_new))
+    # print("offense_result", offense_result[0:5])
+
+    DATE_FORMAT = "%m/%d/%Y %I:%M:%S %p"
+    # get from and to attributes
+    # remove duplicate inccidentNo from modelObjectList
+    modelNewObjectList = [item for item in offense_result_new if item.get("INCIDENT_NO") is not None]
+    unique_incidents_new = {item['INCIDENT_NO']: item for item in modelNewObjectList}
+    print("unique_incidents dictionary length", len(unique_incidents_new))
+
+    for item in unique_incidents_new.values():
+        if item.get("DATE_FROM") != "NA" and item.get("DATE_TO") != "NA":
+            # convert Stringfield element to date element
+            date_from = datetime.strptime(item.get("DATE_FROM"), DATE_FORMAT)
+            date_to = datetime.strptime(item.get("DATE_TO"), DATE_FORMAT)
+            difference_in_hours = (date_from - date_to).total_seconds() / 3600
+            if difference_in_hours <= 2:
+                # create midpoint between fromItem and toItem
+                midpoint = date_from + (date_to - date_from) / 2
+                # print("midpoint", midpoint)
+                # pass elements to new model instance
+                new_model_instance = FilteredModel(INCIDENT_NO=str(item.get("INCIDENT_NO")),
+                                                   MID_DATE=midpoint.strftime(DATE_FORMAT),
+                                                   OFFENSE=item.get("OFFENSE"),
+                                                   DAYOFWEEK=item.get("DAYOFWEEK"),
+                                                   CPD_NEIGHBORHOOD=item.get("CPD_NEIGHBORHOOD"),
+                                                   ADDRESS_X=item.get("ADDRESS_X"),
+                                                   LONGITUDE_X=item.get("LONGITUDE_X"),
+                                                   LATITUDE_X=item.get("LATITUDE_X"),
+                                                   point=item.get("point"))
+                new_model_instance.save()
+    print("NewModel created", FilteredModel.objects.count())
+
+
+def load_dataset3():
+    # create time fields once mid date field is created with value
+    combined_pipeline = [
+        {
+            '$addFields': {
+                'time': {
+                    '$substr': ['$MID_DATE', 11, 13]
+                }
+            }
+        },
+        {
+            "$addFields": {
+                "ampm": {
+                    "$substr": ["$MID_DATE", 20, 2]
+                }
+            }
+        },
+        {
+            '$addFields': {
+                'hour': {
+                    '$substr': ['$time', 0, 2]
+                }
+            }
+        }
+    ]
+
+    hour_result = FilteredModel.objects(INCIDENT_NO__ne=None).aggregate(*combined_pipeline, batchSize=100)
+    hour_result_list = [
+        doc for doc in hour_result
+    ]
+    print("new model result list updated", hour_result_list[0:3])
+
+    return hour_result_list
 
 
 def load_dataset2():
@@ -306,6 +403,8 @@ def filter_dataset(interval, data):
     # #Filter out crime incidents that do not have a location
     point_results = [result for result in data if result.get('point') != [999999.0, 999999.0]]
     print("point_results", point_results[0:5])
+
+    # pass in entries foor valid times in 2 intervals
 
     heavy_crime_list = ['FELONIOUS ASSAULT', 'ASSAULT', 'AGGRAVATED BURGLARY',
                         'AGGRAVATED ROBBERY', 'RAPE', 'ROBBERY', 'MURDER']
@@ -970,20 +1069,21 @@ def compute_range_percentage2(count, countlist):
 
     # assign true to mid dle element in list else false
 
+
 def compute_range_percentage3(count, countlist):
     arr = np.array(countlist)
     unique_elements, counts = np.unique(arr, return_counts=True)
     count_dict = defaultdict(int, zip(unique_elements, counts))
     print("count_dict", count_dict)
     arr_length = len(arr)
-    print("arr_length",arr_length)
+    print("arr_length", arr_length)
     if count in range(0, 4):
-        #get unique elements that belong in range and add the sum of counts
+        # get unique elements that belong in range and add the sum of counts
         print("range(0,4)")
         filtered_dict = {key: value for key, value in count_dict.items() if 0 <= key <= 4}
-        print("filtered_dict",filtered_dict)
+        print("filtered_dict", filtered_dict)
         count_sum = sum(filtered_dict.values())
-        print("count_sum_percentage",count_sum/arr_length)
+        print("count_sum_percentage", count_sum / arr_length)
         safe_percentage = count_sum / arr_length * 100
         print("calaculate safe percentage", safe_percentage)
         return ["safest", safe_percentage]
@@ -997,6 +1097,7 @@ def compute_range_percentage3(count, countlist):
         count_sum = sum(filtered_dict.values())
         heavy_percentage = count_sum / arr_length * 100
         return ["heaviest", heavy_percentage]
+
 
 def compute_range_percentage(count, countlist):
     arr = np.array(countlist)
@@ -1559,6 +1660,58 @@ def delete_filtered_models():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route('/createnewfilteredmodels')
+def create_new_filtered_models():
+    try:
+        interval_list = [
+            "12AM-3AM",
+            "4AM-7AM",
+            "8AM-11AM",
+            "12PM-3PM",
+            "4PM-7PM",
+            "8PM-11PM"
+        ]
+
+        #update_time_entries_for_model3()
+        hour_aggregate_data = load_dataset3()
+
+        for interval in interval_list:
+            data = filter_time_interval(interval, hour_aggregate_data)
+            if interval == "12AM-3AM":
+                for doc in data:
+                    new_model_instance = IntervalOne(**doc)
+                    new_model_instance.save()
+                print("IntervalOne count", IntervalOne.objects.count())
+            elif interval == "4AM-7AM":
+                for doc in data:
+                    new_model_instance = IntervalTwo(**doc)
+                    new_model_instance.save()
+                print("IntervalTwo count", IntervalTwo.objects.count())
+            elif interval == "8AM-11AM":
+                for doc in data:
+                    new_model_instance = IntervalThree(**doc)
+                    new_model_instance.save()
+                print("IntervalThree count", IntervalThree.objects.count())
+            elif interval == "12PM-3PM":
+                for doc in data:
+                    new_model_instance = IntervalFour(**doc)
+                    new_model_instance.save()
+                print("IntervalFour count", IntervalFour.objects.count())
+            elif interval == "4PM-7PM":
+                for doc in data:
+                    new_model_instance = IntervalFive(**doc)
+                    new_model_instance.save()
+                print("IntervalFive count", IntervalFive.objects.count())
+            elif interval == "8PM-11PM":
+                for doc in data:
+                    new_model_instance = IntervalSix(**doc)
+                    new_model_instance.save()
+                print("IntervalSix count", IntervalSix.objects.count())
+        return jsonify({"status": "success", "message": 200})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route('/createfilteredmodels')
 def create_filtered_models():
     try:
@@ -1752,6 +1905,56 @@ def create_grids(element):
     json_data_list = jsonify(data_list)
 
     return get_data(json_data_list, file_name)
+
+@app.route('/createhistogramdfs')
+def process_histogram_todf():
+    distances = ["700meters", "750meters", "800meters", "850meters", "900meters", "950meters", "1kilometer", "1mile"]
+    time_ranges = ["All", "12AM-3AM", "4AM-7AM", "8AM-11AM", "12PM-3PM", "4PM-7PM", "8PM-11PM"]
+
+    errors = []
+    for distance in distances:
+        for time_range in time_ranges:
+            file_path = os.path.join(PROJECT_DIR, 'static', 'data', 'histogram', f'{distance}{time_range}.json')
+
+            try:
+                with open(file_path, 'r') as file:
+                    datajson = json.load(file)
+                    appended_list = datajson.get("appended_list", [])
+                    neighborhood_list = datajson.get("new_neighborhood_list", [])
+
+                    # Ensure lists have at least one element
+                    if not appended_list:
+                        appended_list = [0]  # Default to zero count
+                    if not neighborhood_list:
+                        neighborhood_list = ["NA"]  # Default to "N/A"
+
+                    # Count zeros and modify lists
+                    count_zeros = appended_list.count(0)
+                    filtered_appended_list = [num for num in appended_list if num != 0]
+                    new_appended_list = [count_zeros] + filtered_appended_list
+                    new_neighborhood_list = ["NA"] + neighborhood_list
+
+                    print("new_appended_list", new_appended_list)
+                    print("new_neighborhood_list", new_neighborhood_list)
+
+                    # Save DataFrame as JSON
+                    output_path = os.path.join(PROJECT_DIR, 'static', 'data', 'histogramdf', f'{distance}{time_range}.json')
+                    df = pd.DataFrame({'col1': new_neighborhood_list, 'col2': new_appended_list})
+
+                    # Ensure the DataFrame is not empty before saving
+                    if not df.empty:
+                        df.to_json(output_path, orient="records")
+                    else:
+                        print(f"Skipping empty DataFrame for {file_path}")
+
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                print(f"Error reading file: {file_path}")
+                errors.append({"file": file_path, "error": str(e)})
+
+    if errors:
+        return jsonify({"status": "error", "message": "Some files failed", "details": errors}), 500
+    return jsonify({"status": "success", "message": "All files processed"}), 200
+
 
 
 # Model add hour field aggregate to police_cinci_data_new
