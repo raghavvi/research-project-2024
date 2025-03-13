@@ -1647,13 +1647,13 @@ def success(safe, work, current, destination, interval, gridsize):
         user.radius = radius
         user.units = unit
 
-        start_time = time.time()
-        aggregate_data = load_dataset()
-        print("--- %s aggregate_data secconds ---" % (time.time() - start_time))
-        start_time = time.time()
-        data = filter_dataset(user.interval, aggregate_data)
-        filtered_data_list = [doc for doc in data]
-        print("--- %s filter_dataset secconds ---" % (time.time() - start_time))
+        # start_time = time.time()
+        # aggregate_data = load_dataset()
+        # print("--- %s aggregate_data secconds ---" % (time.time() - start_time))
+        # start_time = time.time()
+        # data = filter_dataset(user.interval, aggregate_data)
+        # filtered_data_list = [doc for doc in data]
+        # print("--- %s filter_dataset secconds ---" % (time.time() - start_time))
 
         meters = get_meters(user.radius, user.units)
 
@@ -1723,7 +1723,6 @@ def success(safe, work, current, destination, interval, gridsize):
         bounding_box_work = create_bounding_box(user.workcoordinates[1], user.workcoordinates[0], meters)
         bounding_box_destination = create_bounding_box(user.destinationcoordinates[1], user.destinationcoordinates[0],
                                                        meters)
-
         # print("bounding_box_safe", bounding_box_safe)
         # print("bounding_box_current", bounding_box_current)
         # print("bounding_box_work", bounding_box_work)
@@ -1731,10 +1730,9 @@ def success(safe, work, current, destination, interval, gridsize):
         print("--- %s bounding_box_ secconds ---" % (time.time() - start_time))
 
         user.grid = get_grid_from_df(file_path)
-
         # print("dataframe for grid", user.grid)
 
-        #vr comment out user.grid to contain dataframe value based on input
+        #comment out user.grid to contain dataframe value based on input
         interval_lists = create_interval_for_dial(user.grid)
         interval_list1 = interval_lists[0]
         interval_list2 = interval_lists[1]
@@ -1792,11 +1790,13 @@ def success(safe, work, current, destination, interval, gridsize):
         print("middle_element_current_count", middle_element_current_count)
         print("current_count_list", current_count_list)
         current_statistic_new = compute_range_percentage(middle_element_current_count, current_count_list)
-        print("current_statistic v", current_statistic_new)
+        print("current_statistic", current_statistic_new)
 
         current_percentage, current_text = current_statistic_new[1], current_statistic_new[0]
 
         print("--- %s compute_range_percentage secconds ---" % (time.time() - start_time))
+
+
 
         # number_of_years = get_difference_in_years()
         # print("number_of_years",number_of_years)

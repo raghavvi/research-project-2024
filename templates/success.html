@@ -653,70 +653,69 @@
 /////////
 
 
-// read json file and return bar chart for neighborhood and crime counts
 function addBarChart() {
 
-    //filePath passed from griddf
+    // filePath passed from griddf
     var filePath = window.location.origin + "/" + "{{griddf}}";
     console.log("filePath", filePath);
 
-   // set the dimensions and margins of the graph
-   const margin = {top: 30, right: 30, bottom: 30, left: 30},
-     width = 280 - margin.left - margin.right,
-     height = 140 - margin.top - margin.bottom;
+    // **Reduced dimensions for a smaller chart**
+    const margin = {top: 20, right: 40, bottom: 20, left: 40},
+          width = 380 - margin.left - margin.right,
+          height = 160 - margin.top - margin.bottom;
 
-   // append the svg object to the body of the page
-   const svg = d3.select("#barchart")
-   .append("svg")
-     .attr("width", width + margin.left + margin.right)
-     .attr("height", height + margin.top + margin.bottom)
-   .append("g")
-     .attr("transform", `translate(${margin.left},${margin.top})`);
+    // append the svg object to the body of the page
+    const svg = d3.select("#barchart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-   // Load the CSV file
-   d3.json(filePath).then(function(data) {
+    // Load the JSON file
+    d3.json(filePath).then(function(data) {
+        console.log("data", data);
 
-    console.log("data",data);
+        // Sort data by crime count (col2)
+        data.sort((b, a) => a.col2 - b.col2);
 
-    data.sort(function(b, a) {
-        return a.col2 - b.col2;
-      });
+        // X axis
+        const x = d3.scaleBand()
+            .range([0, width])
+            .domain(data.map(d => d.col1))
+            .padding(0.1); // Slightly tighter bars for a compact view
 
-      // X axis
-      const x = d3.scaleBand()
-        .range([ 0, width ])
-        .domain(data.map(d => d.col1))
-        .padding(0.2);
-      svg.append("g")
-        .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(x))
-        .selectAll("text")
-          .attr("transform", "translate(-10,0)rotate(-45)")
-          .style("text-anchor", "end");
+        svg.append("g")
+            .attr("transform", `translate(0, ${height})`)
+            .call(d3.axisBottom(x).tickSize(0)) // Remove tick marks
+            .selectAll("text")
+            .attr("transform", "translate(-5,0)rotate(-45)")
+            .style("text-anchor", "end")
+            .style("font-size", "7px"); // Smaller font size
 
-      // Add Y axis
-      const y = d3.scaleLinear()
-        .domain([0, 13000])
-        .range([ height, 0]);
-      svg.append("g")
-        .call(d3.axisLeft(y));
+        // **Updated Y axis**
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.col2)])
+            .range([height, 0]);
 
-      // Bars
-      svg.selectAll("mybar")
-        .data(data)
-        .enter()
-        .append("rect")
-          .attr("x", d => x(d.col1))
-          .attr("y", d => y(d.col2))
-          .attr("width", x.bandwidth())
-          .attr("height", d => height - y(d.Value))
-          .attr("fill", "#69b3a2")
+        svg.append("g")
+            .call(d3.axisLeft(y).ticks(5)) // Fewer ticks for clarity
+            .style("font-size", "10px"); // Smaller font size
 
+        // Bars
+        svg.selectAll("mybar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("x", d => x(d.col1))
+            .attr("y", d => y(d.col2))
+            .attr("width", x.bandwidth())
+            .attr("height", d => height - y(d.col2))
+            .attr("fill", "#69b3a2");
 
-   }).catch(function(error) {
-       // Handle any errors that occur during the loading process
-       console.error('Error loading the Json file:', error);
-   });
+    }).catch(function(error) {
+        console.error('Error loading the Json file:', error);
+    });
 
 }
 
