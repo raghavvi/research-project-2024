@@ -18,9 +18,9 @@
     <style>
 
          .phone-container {
-            width: 80.7mm;
-            height: 170mm;
-            border-radius: 40px;
+            width: 393px;
+            height: 852px;
+            border-radius: 30px;
             background-color: black;
             border: 10px black ridge;
             position: relative;
@@ -35,6 +35,7 @@
 
         .header-container {
             text-align: center;
+            height: 35px;
         }
 
 
@@ -419,7 +420,7 @@
     <div class="phone-container">
         <div class="screen">
             <div class="header-container">
-                Header
+
             </div>
 
 
@@ -461,7 +462,7 @@
                                     <p id="textelement2"></p>
                                     <p id="textelement"></p>
                                     <div id="barchart"></div>
-<!--                                    <div id="histogram2"></div>-->
+
                                     <div id="histogram3"></div>
                                 </div>
                             </div>
@@ -652,19 +653,81 @@
 
 /////////
 
-
-function addBarChart() {
-
+function addBarChart2() {
     // filePath passed from griddf
     var filePath = window.location.origin + "/" + "{{griddf}}";
     console.log("filePath", filePath);
 
-    // **Reduced dimensions for a smaller chart**
-    const margin = {top: 20, right: 40, bottom: 20, left: 40},
-          width = 380 - margin.left - margin.right,
-          height = 160 - margin.top - margin.bottom;
+    const margin = { top: 20, right: 20, bottom: 20, left: 150 };
+    const barHeight = 20;
+    const height = data.length * barHeight + margin.top + margin.bottom;
+    const width = 700;
 
-    // append the svg object to the body of the page
+    // Select and configure the SVG
+    const svg = d3.select("#barchart")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height);
+
+    const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Load the JSON file
+    d3.json(filePath).then(function(data) {
+        console.log("data", data);
+
+        // Sort data by crime count (col2)
+        data.sort((b, a) => a.col2 - b.col2);
+
+            // X Scale (Crime Count)
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.col2)])
+                .range([0, width]);
+
+            // Y Scale (Categories)
+            const y = d3.scaleBand()
+                .domain(data.map(d => d.col1))
+                .range([0, height - margin.top - margin.bottom])
+                .padding(0.1);
+
+            // X Axis
+            g.append("g")
+                .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(5))
+                .style("font-size", "10px");
+
+            // Y Axis
+            g.append("g")
+                .call(d3.axisLeft(y))
+                .style("font-size", "10px");
+
+            // Bars
+            g.selectAll(".bar")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("y", d => y(d.col1))
+                .attr("x", 0)
+                .attr("width", d => x(d.col2))
+                .attr("height", y.bandwidth())
+                .attr("fill", "#69b3a2");
+
+    }).catch(function(error) {
+        console.error('Error loading the Json file:', error);
+    });
+}
+
+function addBarChart() {
+    // filePath passed from griddf
+    var filePath = window.location.origin + "/" + "{{griddf}}";
+    console.log("filePath", filePath);
+
+    // Significantly reduced dimensions for a smaller chart
+    const margin = { top: 10, right: 10, bottom: 15, left: 60 }, // Reduced margins for a smaller layout
+          width = 275 - margin.left - margin.right,  // Reduced width
+          height = 240 - margin.top - margin.bottom; // Reduced height
+
+    // Append the SVG object
     const svg = d3.select("#barchart")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -679,44 +742,102 @@ function addBarChart() {
         // Sort data by crime count (col2)
         data.sort((b, a) => a.col2 - b.col2);
 
-        // X axis
-        const x = d3.scaleBand()
-            .range([0, width])
+        // Y axis (Categories - Neighborhoods)
+        const y = d3.scaleBand()
+            .range([0, height])
             .domain(data.map(d => d.col1))
-            .padding(0.1); // Slightly tighter bars for a compact view
+            .padding(0.1); // Reduced padding for more compact bars
+
+        svg.append("g")
+            .call(d3.axisLeft(y))
+            .style("font-size", "4px"); // Significantly smaller font for labels
+
+        // X axis (Crime counts)
+        const x = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.col2)])
+            .range([0, width]);
 
         svg.append("g")
             .attr("transform", `translate(0, ${height})`)
-            .call(d3.axisBottom(x).tickSize(0)) // Remove tick marks
-            .selectAll("text")
-            .attr("transform", "translate(-5,0)rotate(-45)")
-            .style("text-anchor", "end")
-            .style("font-size", "7px"); // Smaller font size
-
-        // **Updated Y axis**
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.col2)])
-            .range([height, 0]);
-
-        svg.append("g")
-            .call(d3.axisLeft(y).ticks(5)) // Fewer ticks for clarity
-            .style("font-size", "10px"); // Smaller font size
+            .call(d3.axisBottom(x).ticks(3)) // Reduced number of ticks for a cleaner axis
+            .style("font-size", "5px"); // Smaller font size for axis labels
 
         // Bars
         svg.selectAll("mybar")
             .data(data)
             .enter()
             .append("rect")
-            .attr("x", d => x(d.col1))
-            .attr("y", d => y(d.col2))
-            .attr("width", x.bandwidth())
-            .attr("height", d => height - y(d.col2))
+            .attr("y", d => y(d.col1)) // Position based on Y-axis
+            .attr("x", 0) // Start bars from 0
+            .attr("width", d => x(d.col2)) // Set the width according to the crime count
+            .attr("height", y.bandwidth() * 0.8) // Reduced bar height for compact visualization
             .attr("fill", "#69b3a2");
 
     }).catch(function(error) {
         console.error('Error loading the Json file:', error);
     });
+}
 
+
+function addBarChart3() {
+    // filePath passed from griddf
+    var filePath = window.location.origin + "/" + "{{griddf}}";
+    console.log("filePath", filePath);
+
+    // Adjusted dimensions for a horizontal layout
+    const margin = { top: 20, right: 30, bottom: 20, left: 90 }, // Increased left margin for labels
+          width = 410 - margin.left - margin.right,
+          height = 350 - margin.top - margin.bottom; // Increased height for more bars
+
+    // Append the SVG object
+    const svg = d3.select("#barchart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Load the JSON file
+    d3.json(filePath).then(function(data) {
+        console.log("data", data);
+
+        // Sort data by crime count (col2)
+        data.sort((b, a) => a.col2 - b.col2);
+
+        // Y axis (Categories - Neighborhoods)
+        const y = d3.scaleBand()
+            .range([0, height])
+            .domain(data.map(d => d.col1))
+            .padding(0.2);
+
+        svg.append("g")
+            .call(d3.axisLeft(y))
+            .style("font-size", "5px"); // Smaller font for labels
+
+        // X axis (Crime counts)
+        const x = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.col2)])
+            .range([0, width]);
+
+        svg.append("g")
+            .attr("transform", `translate(0, ${height})`)
+            .call(d3.axisBottom(x).ticks(5)) // Fewer ticks
+            .style("font-size", "6px");
+
+        // Bars
+        svg.selectAll("mybar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("y", d => y(d.col1)) // Use y for positioning
+            .attr("x", 0) // Start from 0
+            .attr("width", d => x(d.col2)) // Bar width corresponds to value
+            .attr("height", y.bandwidth())
+            .attr("fill", "#69b3a2");
+
+    }).catch(function(error) {
+        console.error('Error loading the Json file:', error);
+    });
 }
 
 
